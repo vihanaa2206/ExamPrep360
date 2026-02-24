@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   ChevronDown,
   Search,
@@ -7,66 +8,135 @@ import {
   Menu,
 } from "lucide-react";
 
+import AskModal from "./AskModal";
+import ShareModal from "./ShareModal";
+
 const Header = () => {
+  const [user, setUser] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [showAsk, setShowAsk] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    } else {
+      setUser(null);
+    }
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
+  };
+
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+    <>
+      <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
 
-          {/* Logo */}
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-1">
-              <span className="text-2xl font-bold text-blue-600">Exam</span>
-              <span className="text-2xl font-bold text-orange-500">prep</span>
-              <span className="text-2xl font-bold text-gray-900">360</span>
-            </div>
+            {/* LOGO → CLICK = HOME */}
+            <div className="flex items-center gap-8">
+              <Link
+                to="/"
+                className="flex items-center gap-1 cursor-pointer hover:opacity-90"
+              >
+                <span className="text-2xl font-bold text-blue-600">Exam</span>
+                <span className="text-2xl font-bold text-orange-500">prep</span>
+                <span className="text-2xl font-bold text-gray-900">360</span>
+              </Link>
 
-            {/* Browse */}
-            <button className="hidden lg:flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
-              Browse by Stream
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="hidden md:flex flex-1 max-w-xl mx-8">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search Colleges, Exams, Schools & more"
-                className="w-full px-4 py-2.5 pr-10 text-sm text-gray-700 placeholder:text-gray-400 bg-gray-100 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
-              />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                <Search className="w-4 h-4" />
+              <button className="hidden lg:flex items-center gap-2 text-sm font-medium text-gray-700">
+                Browse by Stream
+                <ChevronDown className="w-4 h-4" />
               </button>
             </div>
-          </div>
 
-          {/* Right */}
-          <div className="flex items-center gap-4">
-            <button className="hidden md:flex flex-col items-center text-gray-500 hover:text-blue-600">
-              <MessageCircleQuestion className="w-5 h-5" />
-              <span className="text-xs">Ask</span>
-            </button>
+            {/* SEARCH */}
+            <div className="hidden md:flex flex-1 max-w-xl mx-8">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="Search Colleges, Exams, Schools & more"
+                  className="w-full px-4 py-2.5 pr-10 bg-gray-100 rounded-lg"
+                />
+                <Search className="absolute right-3 top-3 text-gray-400 w-4 h-4" />
+              </div>
+            </div>
 
-            <button className="hidden md:flex flex-col items-center text-gray-500 hover:text-blue-600">
-              <Share2 className="w-5 h-5" />
-              <span className="text-xs">Share</span>
-            </button>
+            {/* RIGHT ICONS */}
+            <div className="flex items-center gap-4">
 
-            {/* Login button navigates to /login */}
-            <Link to="/login">
-              <button className="px-5 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-               Login
+              {/* ASK */}
+              <button
+                onClick={() => setShowAsk(true)}
+                className="hidden md:flex flex-col items-center text-gray-500"
+              >
+                <MessageCircleQuestion className="w-5 h-5" />
+                <span className="text-xs">Ask</span>
               </button>
-            </Link>
-            <button className="lg:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-md">
-              <Menu className="w-6 h-6" />
-            </button>
+
+              {/* SHARE */}
+              <button
+                onClick={() => setShowShare(true)}
+                className="hidden md:flex flex-col items-center text-gray-500"
+              >
+                <Share2 className="w-5 h-5" />
+                <span className="text-xs">Share</span>
+              </button>
+
+              {!user ? (
+                <Link to="/login">
+                  <button className="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg">
+                    Login
+                  </button>
+                </Link>
+              ) : (
+                <div className="relative">
+                  <button
+                    onClick={() => setOpen(!open)}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </div>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+
+                  {open && (
+                    <div className="absolute right-0 top-10 w-56 bg-white border rounded-lg shadow-lg">
+                      <div className="px-4 py-2 text-sm text-gray-600 border-b">
+                        {user.email}
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button className="lg:hidden p-2">
+                <Menu className="w-6 h-6" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* MODALS */}
+      {showAsk && <AskModal onClose={() => setShowAsk(false)} />}
+      {showShare && <ShareModal onClose={() => setShowShare(false)} />}
+    </>
   );
 };
 

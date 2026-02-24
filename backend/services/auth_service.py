@@ -1,59 +1,128 @@
-import random
-from models.user import User, users_db
+from flask_mail import Message
+from extensions import mail, mongo
 from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
 
-otp_store = {}
+from repositories.auth_respository import (
+    get_user_by_email,
+    add_user
+)
 
-def register_user(name, email, password, role="user"):
-    for user in users_db:
-        if user.email == email:
-            return None, "Email already registered"
+from services.otp_service import generate_otp
 
-    user_id = len(users_db) + 1
+SECRET_KEY = "exam_prep_secret"
+
+
+# ================= EMAIL =================
+def send_otp_email(email, otp):
+    msg = Message(
+        subject="Your OTP Verification Code",
+        recipients=[email],
+        body=f"Your OTP is: {otp}\nValid for 1 minute."
+    )
+    mail.send(msg)
+
+
+# ================= REGISTER COMPLETE =================
+def complete_registration(
+    name,
+    email,
+    password,
+    otp,
+    designation=None,
+    profession=None,
+    student_type=None,
+    institute_name=None
+):
+    # 🔒 Check if already exists
+    if get_user_by_email(email):
+        return None, "Email already registered"
+
+    # 🔐 Hash password
     hashed_password = generate_password_hash(password)
 
-    new_user = User(user_id, name, email, hashed_password, role)
-    users_db.append(new_user)
+    # 🎯 Role logic
+    role = "admin" if email == "admin@gmail.com" else "user"
 
-    return new_user, None
+    user = add_user(
+        name=name,
+        email=email,
+        hashed_password=hashed_password,  # IMPORTANT: repository must store as "password"
+        role=role,
+        designation=designation,
+        profession=profession,
+        student_type=student_type,
+        institute_name=institute_name
+    )
+
+    return user, None
 
 
+# ================= LOGIN =================
 def login_user(email, password):
-    for user in users_db:
-        if user.email == email and check_password_hash(user.password, password):
-            return user
-    return None
+    user = get_user_by_email(email)
+
+    if not user:
+        return None, "This email is not registered. Please register first."
+
+    # 🔥 Object style access
+    stored_password = user.password
+
+    if not stored_password:
+        return None, "Password not found in database"
+
+    if not check_password_hash(stored_password, password):
+        return None, "Incorrect password"
+
+    token = jwt.encode(
+        {
+            "id": str(user.id),
+            "email": user.email,
+            "role": user.role,
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=6)
+        },
+        SECRET_KEY,
+        algorithm="HS256"
+    )
+
+    return user, token
 
 
+
+
+# ================= FORGOT PASSWORD =================
 def forgot_password(email):
-    for user in users_db:
-        if user.email == email:
-            otp = random.randint(1000, 9999)
-            otp_store[email] = otp
-            print(f"[DEBUG OTP] {email} → {otp}")
-            return True, "OTP sent"
-    return False, "User not found"
+    user = get_user_by_email(email)
+
+    if not user:
+        return False, "Email not registered"
+
+    # 🔥 Always generate NEW OTP on resend
+    otp = generate_otp(
+        email,
+        digits=4,
+        purpose="forgot",
+        force_new=True
+    )
+
+    send_otp_email(email, otp)
+
+    return True, "OTP sent successfully"
 
 
-def verify_otp(email, otp):
-    if email not in otp_store:
-        return False, "OTP expired or not requested"
+# ================= RESET PASSWORD =================
+def update_password(email, new_password):
+    user = get_user_by_email(email)
 
-    stored_otp = otp_store[email]
+    if not user:
+        return False, "User not found"
 
-    if stored_otp != otp:
-        return False, "Invalid OTP"
+    hashed_password = generate_password_hash(new_password)
 
-    del otp_store[email]
+    mongo.db.users.update_one(
+        {"email": email},
+        {"$set": {"password": hashed_password}}
+    )
 
-    return True, "OTP verified successfully"
-
-
-
-def reset_password(email, new_password):
-    for user in users_db:
-        if user.email == email:
-            user.password = generate_password_hash(new_password)
-            return True, "Password reset successful"
-
-    return False, "User not found"
+    return True, "Password updated successfully"

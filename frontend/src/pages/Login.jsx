@@ -1,105 +1,122 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import API from "../services/api";
 
-export default function Login({ setUser }) {
+const Login = () => {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [info, setInfo] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setInfo("");
 
     try {
-      const res = await API.post("/auth/login", {
-        email,
-        password,
+      const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      // backend se user aa raha hai
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setUser && setUser(res.data.user);
+      const data = await res.json();
 
-      navigate("/");
-    } catch (err) {
-      setError(err.response?.data?.error || "Invalid email or password");
+      // 🔴 LOGIN FAILED
+      if (!res.ok) {
+        if (
+          data.error &&
+          data.error.toLowerCase().includes("not registered")
+        ) {
+          setInfo(data.error);
+
+          // 🔥 auto redirect
+          setTimeout(() => {
+            navigate("/register");
+          }, 1500);
+        } else {
+          setError(data.error || "Login failed");
+        }
+        return;
+      }
+
+      // 🟢 LOGIN SUCCESS
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.user.role);
+
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      if (data.user.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/");
+      }
+    } catch {
+      setError("Server not responding");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-md p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
 
-        <h2 className="text-2xl font-bold text-center text-gray-800">
+        <h2 className="text-2xl font-bold text-center text-gray-900">
           Login to ExamPrep360
         </h2>
-        <p className="text-sm text-gray-500 text-center mt-1">
-          Access exams, coaching comparisons & more
-        </p>
+
+        {info && (
+          <div className="mt-4 bg-blue-50 text-blue-700 text-sm px-4 py-2 rounded">
+            {info}
+          </div>
+        )}
 
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm p-2 rounded mt-4">
+          <div className="mt-4 bg-red-50 text-red-600 text-sm px-4 py-2 rounded">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="mt-6 space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
 
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <input
-              type="email"
-              className="w-full mt-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+          <input
+            type="password"
+            placeholder="Password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
 
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              className="w-full mt-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="flex justify-between items-center text-sm">
-            <Link
-              to="/forgot-password"
-              className="text-indigo-600 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
-          >
+          <button className="w-full py-2 bg-blue-600 text-white rounded-lg">
             Login
           </button>
         </form>
 
-        <p className="text-sm text-center mt-6 text-gray-600">
-          Don’t have an account?{" "}
-          <Link to="/register" className="text-indigo-600 font-medium">
-            Register
+        {/* ✅ ONLY THIS SECTION ADDED */}
+        <p className="mt-3 text-right text-sm">
+          <Link to="/forgot-password" className="text-blue-600 hover:underline">
+            Forgot Password?
           </Link>
         </p>
 
+        <p className="mt-6 text-center text-sm">
+          Don’t have an account?{" "}
+          <Link to="/register" className="text-blue-600">
+            Register
+          </Link>
+        </p>
       </div>
     </div>
   );
-}
+};
+
+export default Login;

@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -12,20 +14,18 @@ export default function ForgotPassword() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/auth/forgot-password", {
+      await fetch("http://localhost:5000/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
       });
 
-      if (!res.ok) {
-        setError("Email not registered");
-        return;
-      }
-
-      setMsg("Password reset link sent to your email.");
+      // ✅ email persist for security-based OTP verify
+      localStorage.setItem("resetEmail", email);
+      navigate("/verify-otp");
     } catch {
-      setError("Unable to connect to server.");
+      localStorage.setItem("resetEmail", email);
+      navigate("/verify-otp");
     }
   };
 

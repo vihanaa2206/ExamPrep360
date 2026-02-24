@@ -1,90 +1,74 @@
 import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-export default function ResetPassword() {
-  const { token } = useParams();
+const ResetPassword = () => {
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [msg, setMsg] = useState("");
+  const [confirm, setConfirm] = useState("");
   const navigate = useNavigate();
 
-  const handleReset = async (e) => {
-    e.preventDefault();
-    setError("");
-    setMsg("");
-
-    try {
-      const res = await fetch(`http://localhost:5000/auth/reset-password/${token}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
-      });
-
-      if (!res.ok) {
-        setError("Invalid or expired reset link");
-        return;
-      }
-
-      setMsg("Password updated successfully");
-      setTimeout(() => navigate("/login"), 2000);
-    } catch {
-      setError("Unable to reset password");
+  const handleReset = async () => {
+    if (password !== confirm) {
+      alert("Passwords do not match");
+      return;
     }
+
+    const email = localStorage.getItem("resetEmail");
+
+    if (!email) {
+      alert("Session expired. Please try again.");
+      navigate("/login");
+      return;
+    }
+
+    await fetch("http://localhost:5000/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    localStorage.removeItem("resetEmail");
+    navigate("/login");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-md p-6">
-
-        <h2 className="text-2xl font-bold text-center text-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <h2 className="text-2xl font-bold text-center text-gray-900">
           Reset Password
         </h2>
-        <p className="text-sm text-gray-500 text-center mt-1">
-          Create a new password for your account
+        <p className="text-sm text-center text-gray-500 mt-2">
+          Create a strong new password
         </p>
 
-        {msg && (
-          <div className="bg-green-50 text-green-600 text-sm p-2 rounded mt-4">
-            {msg}
-          </div>
-        )}
+        <div className="mt-6">
+          <label className="text-sm font-medium">New Password</label>
+          <input
+            type="password"
+            className="w-full mt-2 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 text-sm p-2 rounded mt-4">
-            {error}
-          </div>
-        )}
+        <div className="mt-4">
+          <label className="text-sm font-medium">Confirm Password</label>
+          <input
+            type="password"
+            className="w-full mt-2 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+        </div>
 
-        <form onSubmit={handleReset} className="mt-6 space-y-4">
-
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              New Password
-            </label>
-            <input
-              type="password"
-              className="w-full mt-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter new password"
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
-          >
-            Reset Password
-          </button>
-        </form>
-
-        <p className="text-sm text-center mt-6">
-          <Link to="/login" className="text-indigo-600">
-            Back to Login
-          </Link>
-        </p>
-
+        <button
+          onClick={handleReset}
+          className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-semibold"
+        >
+          Update Password
+        </button>
       </div>
     </div>
   );
-}
+};
+
+export default ResetPassword;

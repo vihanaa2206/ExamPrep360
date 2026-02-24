@@ -1,17 +1,20 @@
-from models.exam_model import Exam, exams_db
+from models.exam_model import exams_db, Exam
 
 
-def get_all_exams():
+# GET all exams
+def get_all():
     return exams_db
 
 
-def get_exam_by_slug(slug):
+# GET exam by slug
+def get_by_slug(slug):
     for exam in exams_db:
         if exam.slug == slug:
             return exam
     return None
 
 
+# ADD new exam
 def add_exam(
     name,
     slug,
@@ -40,19 +43,26 @@ def add_exam(
     return exam
 
 
-def update_exam(slug, updated_full_data):
-    exam = get_exam_by_slug(slug)
+# UPDATE exam (by slug)
+def update_exam(slug, updated_data):
+    exam = get_by_slug(slug)
     if not exam:
         return None
 
-    exam.full_data = updated_full_data
+    exam.full_data = updated_data
     return exam
 
 
+# DELETE exam (by slug)
 def delete_exam(slug):
-    exam = get_exam_by_slug(slug)
+    exam = get_by_slug(slug)
     if not exam:
         return False
 
     exams_db.remove(exam)
     return True
+
+
+# CATEGORY WISE LIST
+def get_by_category(category):
+    return [exam for exam in exams_db if exam.category == category]
