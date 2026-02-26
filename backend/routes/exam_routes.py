@@ -1,93 +1,74 @@
 from flask import Blueprint, request, jsonify
-from services.exam_service import (
-    get_all_exams,
-    get_exam_by_slug,
-    add_exam
-)
-from utils.role_check import admin_only
+from extensions import mongo
+from bson.objectid import ObjectId
 
-
+# Blueprint define karte waqt prefix mat lagaiye yahan
 exam_bp = Blueprint("exam_bp", __name__)
 
+def base_tabs_template():
+    return {
+        "application": "Information updated soon...",
+        "eligibility": "Information updated soon...",
+        "syllabus": "Information updated soon...",
+        "pattern": "Information updated soon...",
+        "preparation": "Information updated soon...",
+        "mockTests": "Information updated soon...",
+        "pyqs": "Information updated soon...",
+        "coaching": "Information updated soon..."
+    }
 
-# HOME PAGE (Cards)
-@exam_bp.route("/api/exams", methods=["GET"])
-def fetch_exams():
-    exams = get_all_exams()
-    return jsonify([exam.to_card_dict() for exam in exams]), 200
+# Route simple rakhein: "/exams"
+@exam_bp.route("/exams", methods=["GET", "POST"])
+def handle_exams():
+    if request.method == "POST":
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid request"}), 400
 
+        existing = mongo.db.exams.find_one({"slug": data.get("slug")})
+        if existing:
+            return jsonify({"error": "Slug already exists"}), 400
 
-# DETAIL PAGE
-@exam_bp.route("/api/exams/<slug>", methods=["GET"])
-def fetch_exam_detail(slug):
-    exam = get_exam_by_slug(slug)
+        exam_document = {
+            "name": data.get("name"),
+            "slug": data.get("slug"),
+            "category": data.get("category"),
+            "level": data.get("level"),
+            "status": "Upcoming",
+            "rating": 4.5,
+            "fullData": data.get("tabs") or base_tabs_template()
+        }
+        mongo.db.exams.insert_one(exam_document)
+        return jsonify({"message": "Success"}), 201
+
+    # GET ALL
+    exams = list(mongo.db.exams.find())
+    for exam in exams:
+        exam["_id"] = str(exam["_id"])
+    return jsonify(exams), 200
+
+@exam_bp.route("/exams/<identifier>", methods=["GET", "PUT", "DELETE"])
+def handle_single_exam(identifier):
+    query = {"_id": ObjectId(identifier)} if ObjectId.is_valid(identifier) else {"slug": identifier}
+    
+    exam = mongo.db.exams.find_one(query)
     if not exam:
-        return jsonify({"error": "Exam not found"}), 404
+        return jsonify({"error": "Not found"}), 404
 
-    return jsonify(exam.to_full_dict()), 200
+    if request.method == "DELETE":
+        mongo.db.exams.delete_one(query)
+        return jsonify({"message": "Deleted"}), 200
 
+    if request.method == "PUT":
+        data = request.get_json()
+        mongo.db.exams.update_one(query, {"$set": {
+            "name": data.get("name"),
+            "category": data.get("category"),
+            "level": data.get("level"),
+            "fullData": data.get("tabs") or data.get("fullData") or {}
+        }})
+        return jsonify({"message": "Updated"}), 200
 
-#  ADMIN ADD EXAM
-@exam_bp.route("/api/exams", methods=["POST"])
-@admin_only
-def create_exam():
-    data = request.get_json()
-
-    exam = add_exam(
-        name=data["name"],
-        slug=data["slug"],
-        category=data["category"],
-        level=data["level"],
-        status=data["status"],
-        rating=data["rating"],
-        card_data=data["cardData"],
-        full_data=data["fullData"]
-    )
-
-    return jsonify({
-        "message": "Exam added successfully",
-        "exam": exam.to_full_dict()
-    }), 201
-
-# UPDATE EXAM (ADMIN)
-@exam_bp.route("/api/exams/<slug>", methods=["PUT"])
-@admin_only
-def update_exam(slug):
-    data = request.get_json()
-
-    exam = get_exam_by_slug(slug)
-    if not exam:
-        return jsonify({"error": "Exam not found"}), 404
-
-    # optional fields update
-    exam.name = data.get("name", exam.name)
-    exam.category = data.get("category", exam.category)
-    exam.level = data.get("level", exam.level)
-    exam.status = data.get("status", exam.status)
-    exam.rating = data.get("rating", exam.rating)
-    exam.card_data = data.get("cardData", exam.card_data)
-    exam.full_data = data.get("fullData", exam.full_data)
-
-    return jsonify({
-        "message": "Exam updated successfully",
-        "exam": exam.to_full_dict()
-    }), 200
-
-# DELETE EXAM (ADMIN)
-@exam_bp.route("/api/exams/<slug>", methods=["DELETE"])
-@admin_only
-def delete_exam(slug):
-    exam = get_exam_by_slug(slug)
-
-    if not exam:
-        return jsonify({"error": "Exam not found"}), 404
-
-    from models.exam_model import exams_db
-    exams_db.remove(exam)
-
-    return jsonify({
-        "message": "Exam deleted successfully",
-        "slug": slug
-    }), 200
-
-
+    exam["_id"] = str(exam["_id"])
+    exam["tabs"] = exam.get("fullData", base_tabs_template())
+    return jsonify(exam), 200

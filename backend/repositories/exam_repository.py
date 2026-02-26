@@ -1,68 +1,53 @@
-from models.exam_model import exams_db, Exam
+from extensions import mongo
 
+# Base tabs template
+def base_template():
+    return {
+        "application": [],
+        "eligibility": [],
+        "syllabus": [],
+        "pattern": [],
+        "preparation": [],
+        "mockTests": [],
+        "pyqs": [],
+        "coaching": []
+    }
 
-# GET all exams
+# GET all exams (cards only)
 def get_all():
-    return exams_db
+    exams = mongo.db.exams.find({}, {"_id": 0, "fullData": 0})
+    return list(exams)
 
-
-# GET exam by slug
+# GET by slug
 def get_by_slug(slug):
-    for exam in exams_db:
-        if exam.slug == slug:
-            return exam
-    return None
-
-
-# ADD new exam
-def add_exam(
-    name,
-    slug,
-    category,
-    level,
-    status,
-    rating,
-    card_data,
-    full_data
-):
-    exam_id = len(exams_db) + 1
-
-    exam = Exam(
-        exam_id=exam_id,
-        name=name,
-        slug=slug,
-        category=category,
-        level=level,
-        status=status,
-        rating=rating,
-        card_data=card_data,
-        full_data=full_data
-    )
-
-    exams_db.append(exam)
+    exam = mongo.db.exams.find_one({"slug": slug}, {"_id": 0})
     return exam
 
+# ADD exam
+def add_exam(data):
+    if not data.get("fullData"):
+        data["fullData"] = base_template()
 
-# UPDATE exam (by slug)
+    mongo.db.exams.insert_one(data)
+    return data
+
+# UPDATE exam
 def update_exam(slug, updated_data):
-    exam = get_by_slug(slug)
-    if not exam:
-        return None
-
-    exam.full_data = updated_data
-    return exam
-
-
-# DELETE exam (by slug)
-def delete_exam(slug):
-    exam = get_by_slug(slug)
-    if not exam:
-        return False
-
-    exams_db.remove(exam)
+    mongo.db.exams.update_one(
+        {"slug": slug},
+        {"$set": {"fullData": updated_data}}
+    )
     return True
 
+# DELETE exam
+def delete_exam(slug):
+    mongo.db.exams.delete_one({"slug": slug})
+    return True
 
-# CATEGORY WISE LIST
+# CATEGORY FILTER
 def get_by_category(category):
-    return [exam for exam in exams_db if exam.category == category]
+    exams = mongo.db.exams.find(
+        {"category": category},
+        {"_id": 0, "fullData": 0}
+    )
+    return list(exams)

@@ -16,7 +16,7 @@ const Categories = () => {
       icon: GraduationCap,
       label: "Engineering",
       slug: "engineering",
-      count: "150+ Exams",
+      count: "9 Top Exams", // Updated as per your 9 cards requirement
       color: "bg-blue-50 text-blue-600",
     },
     {
@@ -80,7 +80,7 @@ const Categories = () => {
             Explore by Category
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Discover exams and colleges across various fields of study
+            Discover verified competitive exams and colleges for your career [cite: 61]
           </p>
         </div>
 

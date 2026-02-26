@@ -29,7 +29,7 @@ mail.init_app(app)
 mongo.init_app(app)
 
 # 🔥 IMPORTANT FIX
-app.register_blueprint(exam_bp)
+app.register_blueprint(exam_bp, url_prefix="/api")
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp, url_prefix="/api")   # ✅ FIXED
 app.register_blueprint(ask_bp, url_prefix="/api")

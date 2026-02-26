@@ -21,6 +21,7 @@ import AdminLayout from "./admin/AdminLayout";
 import AdminDashboard from "./admin/pages/AdminDashboard";
 import AdminExams from "./admin/pages/AdminExams";
 import AdminAddExam from "./admin/pages/AdminAddExam";
+import AdminEditExam from "./admin/pages/AdminEditExam";
 import AdminQueries from "./admin/pages/AdminQueries";
 import ManageUsers from "./admin/pages/ManageUsers";
 
@@ -63,6 +64,7 @@ function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="exams" element={<AdminExams />} />
           <Route path="add-exam" element={<AdminAddExam />} />
+          <Route path="/admin/edit-exam/:slug" element={<AdminEditExam />} />
           <Route path="queries" element={<AdminQueries />} />
           <Route path="pyqs" element={<div>PYQs Page</div>} />
           <Route path="users" element={<ManageUsers />} />
