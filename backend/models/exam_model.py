@@ -1,50 +1,48 @@
-class Exam:
-    def __init__(
-        self,
-        exam_id,
-        name,
-        slug,
-        category,
-        level,
-        status,
-        rating,
-        card_data,
-        full_data
-    ):
-        self.id = exam_id
-        self.name = name
-        self.slug = slug
-        self.category = category
-        self.level = level
-        self.status = status
-        self.rating = rating
-        self.card_data = card_data
-        self.full_data = full_data
-
-    def to_card_dict(self):
-        return {
-            "name": self.name,
-            "slug": self.slug,
-            "category": self.category,
-            "level": self.level,
-            "status": self.status,
-            "rating": self.rating,
-            "cardData": self.card_data
-        }
-
-    def to_full_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "slug": self.slug,
-            "category": self.category,
-            "level": self.level,
-            "status": self.status,
-            "rating": self.rating,
-            "cardData": self.card_data,
-            "fullData": self.full_data
-        }
+from datetime import datetime
 
 
-# RAM based storage
-exams_db = []
+def get_exam_schema():
+    return {
+        "name": str,
+        "slug": str,
+        "category": str,
+        "conducting_body": str,
+        "official_website": str,
+        "exam_mode": str,
+        "exam_level": str,
+        "tabs": {
+            "overview": str,
+            "application": str,
+            "eligibility": str,
+            "exam_pattern": dict,
+            "syllabus": dict,
+            "preparation_tips": list,
+            "important_dates": list,
+        },
+        "created_at": datetime,
+        "updated_at": datetime,
+    }
+
+
+def build_exam_document(data: dict) -> dict:
+    """Validates and returns a clean exam document for MongoDB insertion."""
+    return {
+        "name": data.get("name", ""),
+        "slug": data.get("slug", ""),
+        "category": data.get("category", ""),
+        "conducting_body": data.get("conducting_body", ""),
+        "official_website": data.get("official_website", ""),
+        "exam_mode": data.get("exam_mode", ""),
+        "exam_level": data.get("exam_level", ""),
+        "tabs": {
+            "overview": data.get("tabs", {}).get("overview", ""),
+            "application": data.get("tabs", {}).get("application", ""),
+            "eligibility": data.get("tabs", {}).get("eligibility", ""),
+            "exam_pattern": data.get("tabs", {}).get("exam_pattern", {}),
+            "syllabus": data.get("tabs", {}).get("syllabus", {}),
+            "preparation_tips": data.get("tabs", {}).get("preparation_tips", []),
+            "important_dates": data.get("tabs", {}).get("important_dates", []),
+        },
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+    }

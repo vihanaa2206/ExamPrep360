@@ -6,17 +6,15 @@ from bson import ObjectId
 # ================= USER QUERIES =================
 
 def get_user_by_email(email):
-    doc = mongo.db.users.find_one({"email": email})
+    # ✅ FIX: case-insensitive + indentation fixed
+    doc = mongo.db.users.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}})
     return User.from_mongo(doc) if doc else None
-
 
 def get_user_by_id(user_id):
     if not isinstance(user_id, ObjectId):
         user_id = ObjectId(user_id)
-
     doc = mongo.db.users.find_one({"_id": user_id})
     return User.from_mongo(doc) if doc else None
-
 
 def add_user(
     name,
@@ -40,19 +38,15 @@ def add_user(
         "is_verified": True,
         "created_at": time.time()
     }
-
     result = mongo.db.users.insert_one(user_doc)
     user_doc["_id"] = result.inserted_id
-
     return User.from_mongo(user_doc)
-
 
 def update_password(email, hashed_password):
     mongo.db.users.update_one(
         {"email": email},
         {"$set": {"password": hashed_password}}
     )
-
 
 # ================= EMAIL OTP QUERIES =================
 # ⚠️ IMPORTANT: auth_routes & otp_service BOTH depend on these
@@ -69,10 +63,8 @@ def save_otp(email, otp):
         upsert=True
     )
 
-
 def get_otp(email):
     return mongo.db.email_otps.find_one({"email": email})
-
 
 def delete_otp(email):
     mongo.db.email_otps.delete_one({"email": email})

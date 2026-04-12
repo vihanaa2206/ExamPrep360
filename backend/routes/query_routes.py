@@ -10,7 +10,7 @@ query_id = 1
 # =====================
 # USER → ASK QUESTION
 # =====================
-@query_bp.route("/api/ask", methods=["POST"])
+@query_bp.route("/ask", methods=["POST"])
 def create_query():
     global query_id
     data = request.json

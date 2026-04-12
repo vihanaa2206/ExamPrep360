@@ -49,19 +49,64 @@ def verify_email_otp():
 
 
 # ================= REGISTER COMPLETE =================
+# ================= REGISTER COMPLETE =================
 @auth_bp.route("/auth/register/complete", methods=["POST"])
 def register_complete():
     data = request.get_json()
 
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
+    designation = data.get("designation", "").strip()
+    profession = data.get("profession", "").strip()
+    student_type = data.get("studentType", "").strip()
+    institute = data.get("institute", "").strip()
+
+    # ✅ NEW: All fields mandatory check
+    if not name:
+        return jsonify({"error": "Name is required"}), 400
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    if not password:
+        return jsonify({"error": "Password is required"}), 400
+
+    # ✅ NEW: Strong password validation
+    import re
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters"}), 400
+    if not re.search(r'[A-Z]', password):
+        return jsonify({"error": "Password must contain at least one uppercase letter"}), 400
+    if not re.search(r'[a-z]', password):
+        return jsonify({"error": "Password must contain at least one lowercase letter"}), 400
+    if not re.search(r'[0-9]', password):
+        return jsonify({"error": "Password must contain at least one digit"}), 400
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]', password):
+        return jsonify({"error": "Password must contain at least one special character"}), 400
+
+    # ✅ NEW: Designation mandatory
+    if not designation:
+        return jsonify({"error": "Select designation first"}), 400
+
+    # ✅ NEW: Institute mandatory for student/professor
+    if designation in ["student", "professor"] and not institute:
+        return jsonify({"error": "Please enter your School / College name"}), 400
+
+    # ✅ NEW: Profession mandatory for other
+    if designation == "other" and not profession:
+        return jsonify({"error": "Please enter your profession"}), 400
+
+    # ✅ Original logic - bilkul unchanged
     user, error = complete_registration(
-        name=data.get("name"),
-        email=data.get("email"),
-        password=data.get("password"),
+        name=name,
+        email=email,
+        password=password,
         otp="verified",
-        designation=data.get("designation"),
-        profession=data.get("profession"),
-        student_type=data.get("studentType"),
-        institute_name=data.get("institute"),
+        designation=designation,
+        profession=profession,
+        student_type=student_type,
+        institute_name=institute,
     )
 
     if error:
@@ -71,7 +116,6 @@ def register_complete():
         "message": "Registration successful",
         "user": user.to_dict()
     }), 201
-
 
 # ================= LOGIN =================
 @auth_bp.route("/auth/login", methods=["POST"])

@@ -2,13 +2,15 @@ import { Search, Play } from "lucide-react";
 import { useState } from "react";
 import heroStudents from "../assets/hero-students.jpg";
 import VideoModal from "./VideoModal";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
   const [showVideo, setShowVideo] = useState(false);
 
   const popularTools = [
-    { label: "Free Mock Tests", badge: "NEW", color: "bg-orange-500" },
-    { label: "Previous Year Papers", badge: "POPULAR", color: "bg-blue-500" },
+    { label: "Free Mock Tests",      badge: "NEW",     color: "bg-orange-500", path: "/free-tests" },
+    { label: "Previous Year Papers", badge: "POPULAR", color: "bg-blue-500",   path: "/previous-year-papers" },
   ];
 
   return (
@@ -35,16 +37,15 @@ const Hero = () => {
                 </button>
               </div>
 
-              {/* Popular Tools */}
+              {/* Popular Tools — FIX: onClick added */}
               <div className="flex flex-wrap gap-4">
                 {popularTools.map((tool, index) => (
                   <div
                     key={index}
+                    onClick={() => navigate(tool.path)}
                     className="flex items-center gap-3 px-4 py-3 bg-white border border-border rounded-lg cursor-pointer hover:border-primary/30 hover:shadow-md transition-all"
                   >
-                    <span
-                      className={`px-2 py-0.5 text-xs font-bold text-white rounded ${tool.color}`}
-                    >
+                    <span className={`px-2 py-0.5 text-xs font-bold text-white rounded ${tool.color}`}>
                       {tool.badge}
                     </span>
                     <span className="text-sm font-medium text-foreground">
@@ -55,10 +56,9 @@ const Hero = () => {
               </div>
             </div>
 
-            {/* Right Content - Promo Banner */}
+            {/* Right Content - Promo Banner — UNCHANGED */}
             <div className="relative">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500">
-                {/* Background Image */}
                 <div className="absolute inset-0">
                   <img
                     src={heroStudents}
@@ -68,7 +68,6 @@ const Hero = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-900/80 via-purple-800/60 to-transparent" />
                 </div>
 
-                {/* Content */}
                 <div className="relative p-8 min-h-[320px] flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-3 mb-4">
@@ -76,27 +75,19 @@ const Hero = () => {
                         STREAMING NOW
                       </span>
                       <div className="h-4 w-px bg-white/40" />
-                      <span className="text-white font-bold">
-                        ExamPrep360
-                      </span>
+                      <span className="text-white font-bold">ExamPrep360</span>
                     </div>
 
                     <div className="mb-6">
-                      <span className="text-white/60 text-sm tracking-wider">
-                        THE INDIAN
-                      </span>
+                      <span className="text-white/60 text-sm tracking-wider">THE INDIAN</span>
                       <h3 className="text-3xl font-black text-white tracking-tight">
-                        EDTECH
-                        <br />
-                        STORY
+                        EDTECH<br />STORY
                       </h3>
                     </div>
 
                     <h4 className="text-xl font-bold text-white mb-2">
                       Every Student Matters:{" "}
-                      <span className="font-normal">
-                        Driving the Future of Education
-                      </span>
+                      <span className="font-normal">Driving the Future of Education</span>
                     </h4>
                     <p className="text-white/70 text-sm max-w-sm">
                       Watch how we underline the importance of informed choices
@@ -104,7 +95,6 @@ const Hero = () => {
                     </p>
                   </div>
 
-                  {/* Play Button */}
                   <button
                     onClick={() => setShowVideo(true)}
                     className="mt-6 inline-flex items-center gap-3 px-6 py-3 bg-white text-foreground font-semibold rounded-full hover:bg-white/90 transition-colors w-fit shadow-lg"
@@ -120,7 +110,6 @@ const Hero = () => {
         </div>
       </section>
 
-      {/* Video Modal */}
       <VideoModal isOpen={showVideo} onClose={() => setShowVideo(false)} />
     </>
   );

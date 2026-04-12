@@ -1,9 +1,13 @@
-import { Calendar, Clock, ArrowRight, Star } from "lucide-react";
+import { Calendar, Clock, Star, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const FeaturedExams = () => {
+  const navigate = useNavigate();
+
   const exams = [
     {
       name: "JEE Main 2026",
+      slug: "jee-main",
       category: "Engineering",
       date: "January 24 - February 1, 2026",
       registrations: "Open",
@@ -11,7 +15,8 @@ const FeaturedExams = () => {
       rating: 4.8,
     },
     {
-      name: "NEET UG 2026",
+      name: "NEET UG",
+      slug: "neet-ug",
       category: "Medical",
       date: "May 5, 2026",
       registrations: "Opening Soon",
@@ -20,6 +25,7 @@ const FeaturedExams = () => {
     },
     {
       name: "CAT 2026",
+      slug: "cat",
       category: "Management",
       date: "November 24, 2026",
       registrations: "Opening Soon",
@@ -27,7 +33,8 @@ const FeaturedExams = () => {
       rating: 4.7,
     },
     {
-      name: "GATE 2026",
+      name: "GATE CS",
+      slug: "gate-cs",
       category: "Engineering",
       date: "February 3–11, 2026",
       registrations: "Closed",
@@ -35,7 +42,8 @@ const FeaturedExams = () => {
       rating: 4.8,
     },
     {
-      name: "CUET UG 2026",
+      name: "CUET PG 2026",
+      slug: "cuet-pg",
       category: "Undergraduate",
       date: "May 15–31, 2026",
       registrations: "Open",
@@ -44,6 +52,7 @@ const FeaturedExams = () => {
     },
     {
       name: "CLAT 2026",
+      slug: "clat",
       category: "Law",
       date: "December 3, 2026",
       registrations: "Open",
@@ -67,7 +76,6 @@ const FeaturedExams = () => {
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4">
 
-        {/* Header */}
         <div className="flex items-center justify-between mb-12">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
@@ -78,36 +86,36 @@ const FeaturedExams = () => {
             </p>
           </div>
 
-          <button className="hidden md:flex items-center gap-2 text-blue-600 font-medium hover:gap-3 transition-all">
-            View All Exams <ArrowRight className="w-4 h-4" />
+          <button
+            onClick={() => navigate("/exams")}
+            className="flex items-center gap-1 text-blue-600 font-medium hover:underline text-sm"
+          >
+            View All Exams
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {exams.map((exam, index) => (
             <div
               key={index}
+              onClick={() => navigate(`/exam/${exam.slug}`)}
               className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
             >
-              {/* Top */}
               <div className="flex items-start justify-between mb-4">
                 <span className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-600 rounded-full">
                   {exam.category}
                 </span>
-
                 <div className="flex items-center gap-1 text-amber-500">
                   <Star className="w-4 h-4 fill-amber-500" />
                   <span className="text-sm font-medium">{exam.rating}</span>
                 </div>
               </div>
 
-              {/* Title */}
               <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-blue-600 transition-colors">
                 {exam.name}
               </h3>
 
-              {/* Details */}
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="w-4 h-4" />
@@ -119,29 +127,16 @@ const FeaturedExams = () => {
                 </div>
               </div>
 
-              {/* Footer */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <span
-                  className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                    exam.registrations
-                  )}`}
-                >
+                <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(exam.registrations)}`}>
                   {exam.registrations}
                 </span>
-
                 <button className="text-sm font-medium text-blue-600 hover:underline">
                   View Details
                 </button>
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Mobile Button */}
-        <div className="mt-8 text-center md:hidden">
-          <button className="inline-flex items-center gap-2 text-blue-600 font-medium">
-            View All Exams <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
 
       </div>
