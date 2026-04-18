@@ -1,4 +1,4 @@
-import { Search, Play } from "lucide-react";
+import { Play, BookOpen, ClipboardList, Bell, CalendarDays } from "lucide-react";
 import { useState } from "react";
 import heroStudents from "../assets/hero-students.jpg";
 import VideoModal from "./VideoModal";
@@ -8,55 +8,93 @@ const Hero = () => {
   const navigate = useNavigate();
   const [showVideo, setShowVideo] = useState(false);
 
-  const popularTools = [
-    { label: "Mock Tests",      badge: "NEW",     color: "bg-orange-500", path: "/free-tests" },
-    { label: "Previous Year Papers", badge: "POPULAR", color: "bg-blue-500",   path: "/previous-year-papers" },
+  const tools = [
+    {
+      label: "Mock Tests",
+      sub: "Practice & improve",
+      badge: "NEW",
+      badgeColor: "bg-orange-500",
+      path: "/free-tests",
+      iconBg: "from-orange-500 to-orange-400",
+      cardBorder: "border-orange-200 hover:border-orange-400",
+      Icon: ClipboardList,
+    },
+    {
+      label: "Previous Year Papers",
+      sub: "Solved PYQs",
+      badge: "POPULAR",
+      badgeColor: "bg-blue-500",
+      path: "/previous-year-papers",
+      iconBg: "from-blue-500 to-blue-400",
+      cardBorder: "border-blue-200 hover:border-blue-400",
+      Icon: BookOpen,
+    },
+    {
+      label: "Exam Calendar",
+      sub: "Upcoming dates",
+      badge: null,
+      path: "/resources/exam-calendar",
+      iconBg: "from-violet-500 to-purple-400",
+      cardBorder: "border-purple-200 hover:border-purple-400",
+      Icon: CalendarDays,
+      glassy: true,
+    },
+    {
+      label: "Notifications",
+      sub: "Live updates & news",
+      badge: null,
+      path: "/notifications",
+      iconBg: "from-green-500 to-emerald-400",
+      cardBorder: "border-green-200 hover:border-green-400",
+      Icon: Bell,
+    },
   ];
 
   return (
     <>
-      <section className="py-12 md:py-16" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <section className="py-12 md:py-16" style={{ backgroundColor: "var(--bg-primary)" }}>
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
-            {/* Left Content */}
+
+            {/* Left */}
             <div className="max-w-xl">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-8">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-10">
                 Empowering Students.
                 <span className="block">Building Futures.</span>
               </h1>
 
-              {/* Search Box */}
-              <div className="relative mb-8">
-                <input
-                  type="text"
-                  placeholder="Search Colleges, Exams, Courses & more"
-                  className="w-full px-5 py-4 pr-12 rounded-xl outline-none transition-all"style={{backgroundColor: 'var(--search-bg)',border: '1px solid var(--search-border)',color: 'var(--search-text)',}}
-                />
-                <button className="absolute right-4 top-1/2 -translate-y-1/2 text-primary hover:text-primary/80 transition-colors">
-                  <Search className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Popular Tools — FIX: onClick added */}
-              <div className="flex flex-wrap gap-4">
-                {popularTools.map((tool, index) => (
-                  <div
-                    key={index}
+              {/* 2x2 Feature Cards */}
+              <div className="grid grid-cols-2 gap-4">
+                {tools.map((tool, i) => (
+                  <button
+                    key={i}
                     onClick={() => navigate(tool.path)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer hover:shadow-md transition-all"style={{backgroundColor: 'var(--bg-card)',border: '1px solid var(--border-color)',}}
+                    className={`relative flex items-center gap-3 px-4 py-4 rounded-2xl border transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 text-left group ${tool.cardBorder}`}
+                    style={{ backgroundColor: "var(--bg-card)" }}
                   >
-                    <span className={`px-2 py-0.5 text-xs font-bold text-white rounded ${tool.color}`}>
-                      {tool.badge}
-                    </span>
-                    <span className="text-sm font-medium text-foreground">
-                      {tool.label}
-                    </span>
-                  </div>
+                    {tool.badge && (
+                      <span className={`absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold text-white rounded-full ${tool.badgeColor}`}>
+                        {tool.badge}
+                      </span>
+                    )}
+
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.iconBg} flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-105 transition-transform relative`}>
+                      {tool.glassy && (
+                        <div className="absolute inset-1 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30" />
+                      )}
+                      <tool.Icon className="w-6 h-6 text-white relative z-10" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-bold text-foreground leading-tight">{tool.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{tool.sub}</p>
+                    </div>
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Right Content - Promo Banner — UNCHANGED */}
+            {/* Right — Promo Banner */}
             <div className="relative">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500">
                 <div className="absolute inset-0">
@@ -67,24 +105,19 @@ const Hero = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-900/80 via-purple-800/60 to-transparent" />
                 </div>
-
                 <div className="relative p-8 min-h-[320px] flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-3 mb-4">
-                      <span className="text-white/80 text-sm font-medium tracking-wide">
-                        STREAMING NOW
-                      </span>
+                      <span className="text-white/80 text-sm font-medium tracking-wide">STREAMING NOW</span>
                       <div className="h-4 w-px bg-white/40" />
                       <span className="text-white font-bold">ExamPrep360</span>
                     </div>
-
                     <div className="mb-6">
                       <span className="text-white/60 text-sm tracking-wider">THE INDIAN</span>
                       <h3 className="text-3xl font-black text-white tracking-tight">
                         EDTECH<br />STORY
                       </h3>
                     </div>
-
                     <h4 className="text-xl font-bold text-white mb-2">
                       Every Student Matters:{" "}
                       <span className="font-normal">Driving the Future of Education</span>
@@ -94,7 +127,6 @@ const Hero = () => {
                       that help shape academic and career success.
                     </p>
                   </div>
-
                   <button
                     onClick={() => setShowVideo(true)}
                     className="mt-6 inline-flex items-center gap-3 px-6 py-3 bg-white text-foreground font-semibold rounded-full hover:bg-white/90 transition-colors w-fit shadow-lg"
@@ -106,6 +138,7 @@ const Hero = () => {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>

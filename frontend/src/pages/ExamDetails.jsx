@@ -15,73 +15,143 @@ const TABS = [
 ];
 
 /* ================= Overview ================= */
+// Splits "Key: Value Key2: Value2" inline text into [{key, value}] chunks
+const parseInlineKeyValues = (text) => {
+  // Match patterns like "Word Word: some value" repeatedly
+  const regex = /([A-Z][A-Za-z\s\/()&-]{1,40}?):\s*([^:]+?)(?=\s{2,}[A-Z]|[A-Z][A-Za-z\s\/()&-]{1,40}?:|$)/g;
+  const results = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const key = match[1].trim();
+    const val = match[2].trim().replace(/\.\s*$/, "");
+    if (key && val) results.push({ key, val });
+  }
+  return results;
+};
+
 const OverviewTab = ({ content }) => {
   if (!content) return <p className="text-gray-500">No overview available.</p>;
 
-  const lines = content.split("\n").filter((l) => l.trim() !== "");
-  const blocks = [];
-  let paraBuffer = [];
+  // Step 1: inject newline before explicit bullet chars
+  const normalized = content.replace(/([^•\n])(•)/g, "$1\n•");
+  const rawLines = normalized.split("\n").filter((l) => l.trim() !== "");
 
-  lines.forEach((line) => {
-    const t = line.trim();
-    if (t.startsWith("•") || t.startsWith("-")) {
-      if (paraBuffer.length) {
-        blocks.push({ type: "para", text: paraBuffer.join(" ") });
-        paraBuffer = [];
+  // Step 2: detect if content has explicit bullets at all
+  const hasBullets = rawLines.some((l) => l.trim().startsWith("•") || l.trim().startsWith("-"));
+
+  // ── FORMAT A: explicit bullets (NEET UG style) ──────────────────────────
+  if (hasBullets) {
+    const blocks = [];
+    let paraBuffer = [];
+    rawLines.forEach((line) => {
+      const t = line.trim();
+      if (t.startsWith("•") || t.startsWith("-")) {
+        if (paraBuffer.length) { blocks.push({ type: "para", text: paraBuffer.join(" ") }); paraBuffer = []; }
+        blocks.push({ type: "bullet", text: t.replace(/^[•\-]\s*/, "") });
+      } else { paraBuffer.push(t); }
+    });
+    if (paraBuffer.length) blocks.push({ type: "para", text: paraBuffer.join(" ") });
+
+    const groups = [];
+    let bulletBuf = [];
+    blocks.forEach((b) => {
+      if (b.type === "bullet") { bulletBuf.push(b.text); }
+      else {
+        if (bulletBuf.length) { groups.push({ type: "bullets", items: [...bulletBuf] }); bulletBuf = []; }
+        groups.push({ type: "para", text: b.text });
       }
-      blocks.push({ type: "bullet", text: t.replace(/^[•\-]\s*/, "") });
-    } else {
-      paraBuffer.push(t);
-    }
-  });
-  if (paraBuffer.length) blocks.push({ type: "para", text: paraBuffer.join(" ") });
+    });
+    if (bulletBuf.length) groups.push({ type: "bullets", items: bulletBuf });
 
-  const groups = [];
-  let bulletBuf = [];
-  blocks.forEach((b) => {
-    if (b.type === "bullet") {
-      bulletBuf.push(b.text);
-    } else {
-      if (bulletBuf.length) {
-        groups.push({ type: "bullets", items: [...bulletBuf] });
-        bulletBuf = [];
-      }
-      groups.push({ type: "para", text: b.text });
-    }
-  });
-  if (bulletBuf.length) groups.push({ type: "bullets", items: bulletBuf });
-
-  return (
-    <div className="space-y-4">
-      {groups.map((g, i) => {
-        if (g.type === "bullets") {
-          return (
-            <ul key={i} className="space-y-2">
-              {g.items.map((item, j) => {
-                const ci = item.indexOf(":");
-                if (ci !== -1) {
+    return (
+      <div className="space-y-4">
+        {groups.map((g, i) => {
+          if (g.type === "bullets") {
+            return (
+              <ul key={i} className="space-y-2">
+                {g.items.map((item, j) => {
+                  const ci = item.indexOf(":");
+                  if (ci !== -1 && ci < 40) {
+                    return (
+                      <li key={j} className="flex items-start gap-2 text-gray-700">
+                        <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
+                        <span>
+                          <span className="font-semibold text-gray-900">{item.substring(0, ci)}:</span>{" "}
+                          {item.substring(ci + 1).trim()}
+                        </span>
+                      </li>
+                    );
+                  }
                   return (
                     <li key={j} className="flex items-start gap-2 text-gray-700">
                       <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
-                      <span>
-                        <span className="font-semibold text-gray-900">{item.substring(0, ci)}:</span>{" "}
-                        {item.substring(ci + 1).trim()}
-                      </span>
+                      <span>{item}</span>
                     </li>
                   );
-                }
-                return (
-                  <li key={j} className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
-                    <span>{item}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          );
-        }
-        return <p key={i} className="text-gray-700 leading-relaxed">{g.text}</p>;
-      })}
+                })}
+              </ul>
+            );
+          }
+          return <p key={i} className="text-gray-700 leading-relaxed">{g.text}</p>;
+        })}
+      </div>
+    );
+  }
+
+  // ── FORMAT B: plain text blob with inline "Key: Value" (JIPMER style) ──
+  // Split on sentence boundaries OR on "Key:" patterns
+  // Strategy: split the blob by detecting "CapitalWord(s):" as new bullet start
+  const splitPattern = /(?<=\.\s)(?=[A-Z][A-Za-z\s\/()&-]{1,40}?:)|(?<=[^:]\.\s{0,2})(?=[A-Z])/g;
+  
+  // Simpler & more reliable: split on ". " then detect if chunk starts with "Key:"
+  const sentences = content
+    .replace(/\s{2,}/g, " ")
+    .split(/(?<=\.)\s+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  // Group sentences: intro paras vs key:value bullets
+  const introParas = [];
+  const bulletItems = [];
+
+  sentences.forEach((s) => {
+    // If sentence starts with "Word(s): " pattern (label: value)
+    const colonMatch = s.match(/^([A-Z][A-Za-z\s\/()&-]{1,35}?):\s+(.+)/);
+    if (colonMatch && colonMatch[1].split(" ").length <= 4) {
+      bulletItems.push({ key: colonMatch[1].trim(), val: colonMatch[2].trim() });
+    } else {
+      // Check if it's a plain sentence (no key: pattern)
+      introParas.push(s);
+    }
+  });
+
+  // If no bullets extracted, just render as paragraphs
+  if (bulletItems.length === 0) {
+    return (
+      <div className="space-y-3">
+        {introParas.map((p, i) => (
+          <p key={i} className="text-gray-700 leading-relaxed">{p}</p>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {introParas.length > 0 && (
+        <p className="text-gray-700 leading-relaxed">{introParas.join(" ")}</p>
+      )}
+      <ul className="space-y-2">
+        {bulletItems.map((item, i) => (
+          <li key={i} className="flex items-start gap-2 text-gray-700">
+            <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
+            <span>
+              <span className="font-semibold text-gray-900">{item.key}:</span>{" "}
+              {item.val}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
@@ -144,96 +214,55 @@ const ApplicationTab = ({ content }) => {
   );
 };
 
-/* ================= Eligibility — Image 2 layout ================= */
+/* ================= Eligibility ================= */
 const EligibilityTab = ({ content }) => {
   if (!content) return <p className="text-gray-500">Eligibility info not available.</p>;
 
-  const lines = content.split("\n").filter((l) => l.trim() !== "");
-  const cards = [];
-  const additionalBullets = [];
-  let currentCard = null;
+  // Normalize: inline bullets → newlines
+  const normalized = content
+    .replace(/([^•\n])(•)/g, "$1\n•")
+    .replace(/([^✓\n])(✓)/g, "$1\n✓");
 
-  lines.forEach((line) => {
-    const t = line.trim();
-    const isBullet = t.startsWith("•") || t.startsWith("-");
-    const clean = t.replace(/^[•\-]\s*/, "");
-    const ci = clean.indexOf(":");
-
-    if (!isBullet && ci !== -1 && clean.length < 120) {
-      const label = clean.substring(0, ci).trim();
-      const value = clean.substring(ci + 1).trim();
-      if (label && value) {
-        if (currentCard) cards.push(currentCard);
-        currentCard = { label, value, extras: [] };
-        return;
-      }
-    }
-
-    if (isBullet) {
-      if (currentCard) currentCard.extras.push(clean);
-      else additionalBullets.push(clean);
-    } else if (t) {
-      if (currentCard) currentCard.extras.push(t);
-      else additionalBullets.push(t);
-    }
-  });
-  if (currentCard) cards.push(currentCard);
+  // Extract all items as flat list — strip bullet prefix chars
+  const items = normalized
+    .split("\n")
+    .map((l) => l.trim().replace(/^[•\-✓✗]\s*/, ""))
+    .filter(Boolean);
 
   return (
-    <div className="space-y-6">
-      {/* Title */}
+    <div className="space-y-5">
       <div className="flex items-center gap-2">
         <span className="text-blue-500 text-xl">🎓</span>
         <h3 className="text-lg font-bold text-gray-800">Eligibility Criteria</h3>
       </div>
 
-      {/* Cards grid — exactly like Image 2 */}
-      {cards.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cards.map((card, i) => (
-            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
-                {card.label}
-              </p>
-              <p className="text-gray-900 font-semibold text-sm leading-snug">{card.value}</p>
-              {card.extras.length > 0 && (
-                <ul className="mt-2 space-y-1">
-                  {card.extras.map((ex, j) => (
-                    <li key={j} className="text-xs text-gray-500 flex items-start gap-1">
-                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
-                      {ex}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+      <div>
+        <p className="text-sm font-semibold text-gray-600 mb-3">Additional Criteria</p>
+        <ul className="space-y-2">
+          {items.map((item, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+              <span className="flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              <span>
+                {item.includes(":") && item.indexOf(":") < 50 ? (
+                  <>
+                    <span className="font-semibold text-gray-900">{item.substring(0, item.indexOf(":")+1)}</span>
+                    {" "}{item.substring(item.indexOf(":")+1).trim()}
+                  </>
+                ) : item}
+              </span>
+            </li>
           ))}
-        </div>
-      )}
-
-      {/* Additional Criteria — like Image 2 bottom section */}
-      {additionalBullets.length > 0 && (
-        <div>
-          <p className="text-sm font-semibold text-gray-600 mb-3">Additional Criteria</p>
-          <ul className="space-y-2">
-            {additionalBullets.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                <span className="flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        </ul>
+      </div>
     </div>
   );
 };
 
-/* ================= Exam Pattern — Image 1 layout ================= */
+/* ================= Exam Pattern ================= */
 const ExamPatternTab = ({ pattern }) => {
   if (!pattern || (typeof pattern === "object" && Object.keys(pattern).length === 0)) {
     return <p className="text-gray-500">Exam pattern not available.</p>;
@@ -243,7 +272,6 @@ const ExamPatternTab = ({ pattern }) => {
     return <p className="text-gray-700 whitespace-pre-line text-sm">{pattern}</p>;
   }
 
-  /* compute total questions from sections */
   const totalQuestions = pattern.sections
     ? pattern.sections.reduce((acc, sec) => {
         const q = typeof sec.questions === "number" ? sec.questions : 0;
@@ -253,7 +281,6 @@ const ExamPatternTab = ({ pattern }) => {
 
   return (
     <div className="space-y-6">
-      {/* Section title */}
       <div className="flex items-center gap-2">
         <span className="text-blue-500 text-xl">📋</span>
         <h3 className="text-lg font-bold text-gray-800">Exam Pattern</h3>
@@ -263,27 +290,19 @@ const ExamPatternTab = ({ pattern }) => {
         <p className="text-gray-500 text-sm">{pattern.description}</p>
       )}
 
-      {/* 4-stat cards row — Image 1 style */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Duration */}
         {pattern.duration && (
           <div className="bg-blue-50 rounded-xl p-4 text-center">
             <p className="text-blue-600 text-lg font-bold leading-tight">{pattern.duration}</p>
             <p className="text-gray-500 text-xs mt-1">Duration</p>
           </div>
         )}
-
-        {/* Total Marks */}
         {pattern.total_marks && (
           <div className="bg-purple-50 rounded-xl p-4 text-center">
-            <p className="text-purple-600 text-lg font-bold leading-tight">
-              {String(pattern.total_marks)}
-            </p>
+            <p className="text-purple-600 text-lg font-bold leading-tight">{String(pattern.total_marks)}</p>
             <p className="text-gray-500 text-xs mt-1">Total Marks</p>
           </div>
         )}
-
-        {/* Total Questions — derived from sections if available */}
         {(totalQuestions > 0 || pattern.total_questions) && (
           <div className="bg-teal-50 rounded-xl p-4 text-center">
             <p className="text-teal-600 text-lg font-bold leading-tight">
@@ -292,8 +311,6 @@ const ExamPatternTab = ({ pattern }) => {
             <p className="text-gray-500 text-xs mt-1">Questions</p>
           </div>
         )}
-
-        {/* Marking Scheme */}
         {pattern.marking_scheme && (
           <div className="bg-green-50 rounded-xl p-4 text-center">
             <p className="text-green-700 text-xs font-semibold leading-snug break-words">
@@ -304,7 +321,6 @@ const ExamPatternTab = ({ pattern }) => {
         )}
       </div>
 
-      {/* Section-wise table — Image 1 style */}
       {pattern.sections && pattern.sections.length > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-gray-700 mb-3">Section-wise Breakdown</h4>
@@ -320,10 +336,7 @@ const ExamPatternTab = ({ pattern }) => {
               </thead>
               <tbody>
                 {pattern.sections.map((sec, i) => (
-                  <tr
-                    key={i}
-                    className={`border-b border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
-                  >
+                  <tr key={i} className={`border-b border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
                     <td className="px-5 py-3 font-medium text-gray-900">{sec.subject}</td>
                     <td className="px-4 py-3 text-center text-gray-700">{sec.questions}</td>
                     <td className="px-4 py-3 text-center text-gray-700">{sec.marks}</td>
@@ -339,7 +352,7 @@ const ExamPatternTab = ({ pattern }) => {
   );
 };
 
-/* ================= Syllabus — unchanged ================= */
+/* ================= Syllabus ================= */
 const SyllabusTab = ({ syllabus }) => {
   const [openSubject, setOpenSubject] = useState(null);
   if (!syllabus || !syllabus.subjects)
@@ -388,27 +401,20 @@ const SyllabusTab = ({ syllabus }) => {
   );
 };
 
-/* ================= Preparation Tips — Image 3 layout ================= */
+/* ================= Preparation Tips ================= */
 const PreparationTab = ({ tips }) => {
   if (!tips) return <p className="text-gray-500">Preparation tips not available.</p>;
   const list = Array.isArray(tips) ? tips : [tips];
 
   return (
     <div className="space-y-6">
-      {/* Heading with bulb icon — Image 3 */}
       <div className="flex items-center gap-2">
         <span className="text-yellow-400 text-2xl">💡</span>
         <h3 className="text-lg font-bold text-gray-800">Preparation Tips</h3>
       </div>
-
-      {/* 2-column numbered cards grid — Image 3 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {list.map((tip, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-4 bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-sm"
-          >
-            {/* Blue circle number */}
+          <div key={i} className="flex items-start gap-4 bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-sm">
             <div className="flex-shrink-0 w-9 h-9 rounded-full bg-blue-500 text-white text-sm font-bold flex items-center justify-center">
               {i + 1}
             </div>
@@ -428,25 +434,19 @@ const PYQsTab = ({ pyqs }) => {
     <div className="space-y-4">
       {pyqs.availability && (
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
-            Availability
-          </p>
+          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Availability</p>
           <p className="text-sm text-gray-700">{pyqs.availability}</p>
         </div>
       )}
       {pyqs.difficulty_trend && (
         <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4">
-          <p className="text-xs font-semibold text-yellow-600 uppercase tracking-wide mb-1">
-            Difficulty Trend
-          </p>
+          <p className="text-xs font-semibold text-yellow-600 uppercase tracking-wide mb-1">Difficulty Trend</p>
           <p className="text-sm text-gray-700">{pyqs.difficulty_trend}</p>
         </div>
       )}
       {pyqs.recommended_sources && pyqs.recommended_sources.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Recommended Sources
-          </p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Recommended Sources</p>
           <ul className="space-y-2">
             {pyqs.recommended_sources.map((src, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -468,25 +468,19 @@ const MockTestsTab = ({ mockTests }) => {
     <div className="space-y-4">
       {mockTests.importance && (
         <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-          <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">
-            Why Mock Tests Matter
-          </p>
+          <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Why Mock Tests Matter</p>
           <p className="text-sm text-gray-700">{mockTests.importance}</p>
         </div>
       )}
       {mockTests.recommended_count && (
         <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
-          <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1">
-            Recommended Count
-          </p>
+          <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1">Recommended Count</p>
           <p className="text-sm text-gray-700">{mockTests.recommended_count}</p>
         </div>
       )}
       {mockTests.recommended_platforms && mockTests.recommended_platforms.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Recommended Platforms
-          </p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Recommended Platforms</p>
           <ul className="space-y-2">
             {mockTests.recommended_platforms.map((p, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -535,11 +529,11 @@ const ExamDetails = () => {
   }
 
   const tabs = exam?.tabs || {};
-  
+
   const getPattern = () => {
-  const t = exam?.tabs || {};
-  return t.exam_pattern || null;
-};
+    const t = exam?.tabs || {};
+    return t.exam_pattern || null;
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
