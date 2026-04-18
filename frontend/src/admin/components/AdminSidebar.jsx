@@ -19,6 +19,7 @@ const NAV = [
   { to: "/admin/payments",       label: "Payment Records",         icon: CreditCard },
   { to: "/admin/feedbacks",      label: "User Feedbacks",          icon: MessageSquare, badge: true },
   { to: "/admin/ai-chat-logs",   label: "AI Chat Logs",            icon: Bot },
+  { to: "/admin/ai-training",    label: "AI Training",      icon: Bot },
 ];
 
 export default function AdminSidebar({ pendingCount }) {

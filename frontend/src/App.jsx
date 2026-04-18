@@ -56,6 +56,7 @@ import PricingPage from "./pages/PricingPage";
 import AdminPayments from "./admin/pages/AdminPayments";
 import AdminFeedbacks from "./admin/pages/AdminFeedbacks";
 import AdminAIChatLogs from "./admin/pages/AdminAIChatLogs";
+import AdminAITraining from "./admin/pages/AdminAITraining";
 
 
 function ProfileRoute() {
@@ -172,8 +173,8 @@ function App() {
           {/* FIX: was absolute path "/admin/payments" → now relative "payments" */}
           <Route path="payments"        element={<AdminPayments />} />
           <Route path="feedbacks"       element={<AdminFeedbacks />} />
-          {/* FIX: was absolute "/admin/ai-chat-logs" → now relative "ai-chat-logs" */}
           <Route path="ai-chat-logs"    element={<AdminAIChatLogs />} />
+          <Route path="ai-training"   element={<AdminAITraining />} /> 
         </Route>
 
       </Routes>

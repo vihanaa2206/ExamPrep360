@@ -24,8 +24,7 @@ from routes.mock_routes import mock_bp
 from routes.pyq_routes import pyq_bp
 from routes.payment_routes import payment_bp
 from routes.feedback import feedback_bp
-
-
+from routes.ai_chat_routes import ai_chat_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -62,6 +61,7 @@ app.register_blueprint(pyq_bp, url_prefix="/api")
 app.register_blueprint(reports_bp, url_prefix="/api")
 app.register_blueprint(payment_bp, url_prefix="/api")
 app.register_blueprint(feedback_bp, url_prefix="/api")
+app.register_blueprint(ai_chat_bp)
 # ---------------- RUN SERVER ---------------- #
 if __name__ == "__main__":
     app.run(debug=True)
