@@ -24,42 +24,52 @@ const PYPSelection = () => {
     f.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Clean display name — remove .pdf extension
   const displayName = (filename) => filename.replace(/\.pdf$/i, "");
 
   return (
-    <div className="p-6 bg-gradient-to-b from-blue-50 to-white min-h-screen">
+    <div className="p-6 min-h-screen" style={{ background: "var(--bg-primary, #0f172a)" }}>
       <div className="max-w-5xl mx-auto">
 
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-blue-600 font-bold mb-6 hover:text-blue-800 transition-colors text-sm"
+          className="flex items-center gap-2 font-bold mb-6 hover:opacity-80 transition-colors text-sm"
+          style={{ color: "#818cf8" }}
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
 
         {/* Header */}
-        <div className="bg-white rounded-3xl shadow-xl border border-blue-100 p-8 mb-6">
+        <div
+          className="rounded-3xl shadow-xl p-8 mb-6 border"
+          style={{
+            background: "var(--bg-secondary, #1e293b)",
+            borderColor: "var(--border-color, #334155)",
+          }}
+        >
           <div className="flex items-center gap-4 mb-2">
-            <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-200">
+            <div className="p-3 rounded-2xl shadow-lg" style={{ background: "#4f46e5" }}>
               <FileText className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-gray-900">{decodedExam}</h1>
-              <p className="text-gray-500 text-sm">Official Previous Year Question Papers</p>
+              <h1 className="text-3xl font-black" style={{ color: "var(--text-primary, #f1f5f9)" }}>{decodedExam}</h1>
+              <p className="text-sm" style={{ color: "var(--text-secondary, #94a3b8)" }}>Official Previous Year Question Papers</p>
             </div>
           </div>
 
           {/* Search */}
           <div className="relative mt-5">
-            <Search className="absolute left-4 top-3 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-4 top-3 w-4 h-4" style={{ color: "#64748b" }} />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search papers by year or name..."
-              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200
-                         rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full pl-11 pr-4 py-2.5 border rounded-xl text-sm outline-none"
+              style={{
+                background: "var(--bg-input, #0f172a)",
+                borderColor: "var(--border-color, #334155)",
+                color: "var(--text-primary, #f1f5f9)",
+              }}
             />
           </div>
         </div>
@@ -67,14 +77,20 @@ const PYPSelection = () => {
         {/* Files list */}
         {loading ? (
           <div className="text-center py-20">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"/>
-            <p className="text-gray-400 text-sm">Loading papers...</p>
+            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"/>
+            <p className="text-sm" style={{ color: "#64748b" }}>Loading papers...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-200 p-12 text-center shadow-sm">
-            <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-xl font-bold text-gray-600 mb-2">No Papers Found</p>
-            <p className="text-sm text-gray-400">
+          <div
+            className="rounded-3xl border p-12 text-center shadow-sm"
+            style={{
+              background: "var(--bg-secondary, #1e293b)",
+              borderColor: "var(--border-color, #334155)",
+            }}
+          >
+            <AlertCircle className="w-12 h-12 mx-auto mb-3" style={{ color: "#475569" }} />
+            <p className="text-xl font-bold mb-2" style={{ color: "var(--text-primary, #f1f5f9)" }}>No Papers Found</p>
+            <p className="text-sm" style={{ color: "#64748b" }}>
               {files.length === 0
                 ? `No PDF files found in public/pdfs/${decodedExam}/ folder`
                 : "No papers match your search"}
@@ -82,26 +98,39 @@ const PYPSelection = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-gray-400 font-medium">
+            <p className="text-sm font-medium" style={{ color: "#64748b" }}>
               {filtered.length} paper{filtered.length !== 1 ? "s" : ""} found
             </p>
 
             {filtered.map((file, i) => (
-              <div key={i}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm
-                           hover:border-blue-300 hover:shadow-lg transition-all duration-300 p-6">
+              <div
+                key={i}
+                className="rounded-2xl border shadow-sm transition-all duration-300 p-6"
+                style={{
+                  background: "var(--bg-secondary, #1e293b)",
+                  borderColor: "var(--border-color, #334155)",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = "#6366f1";
+                  e.currentTarget.style.boxShadow = "0 10px 25px rgba(99,102,241,0.2)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = "var(--border-color, #334155)";
+                  e.currentTarget.style.boxShadow = "";
+                }}
+              >
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
 
                   {/* File info */}
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-6 h-6 text-red-500" />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.15)" }}>
+                      <FileText className="w-6 h-6" style={{ color: "#ef4444" }} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 text-base">
+                      <h3 className="font-bold text-base" style={{ color: "var(--text-primary, #f1f5f9)" }}>
                         {displayName(file.name)}
                       </h3>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
                         PDF · {file.size_kb} KB
                       </p>
                     </div>
@@ -115,8 +144,10 @@ const PYPSelection = () => {
                       target="_blank"
                       rel="noreferrer"
                       className="flex-1 md:flex-none flex items-center justify-center gap-2
-                                 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold
-                                 text-sm hover:bg-gray-200 transition-all"
+                                 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+                      style={{ background: "#1e293b", color: "#94a3b8", border: "1px solid #334155" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "#334155"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "#1e293b"; }}
                     >
                       <Eye className="w-4 h-4" /> View
                     </a>
@@ -126,8 +157,10 @@ const PYPSelection = () => {
                       href={file.path}
                       download={file.name}
                       className="flex-1 md:flex-none flex items-center justify-center gap-2
-                                 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold
-                                 text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-200"
+                                 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+                      style={{ background: "#4f46e5", color: "white", boxShadow: "0 4px 15px rgba(79,70,229,0.4)" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "#4338ca"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "#4f46e5"; }}
                     >
                       <Download className="w-4 h-4" /> Download
                     </a>

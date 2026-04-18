@@ -13,7 +13,6 @@ const AllExamsPage = () => {
       date: "January 24 - February 1, 2026",
       registrations: "Open",
       level: "National",
-      rating: 4.8,
     },
     {
       name: "NEET UG",
@@ -22,7 +21,6 @@ const AllExamsPage = () => {
       date: "May 5, 2026",
       registrations: "Opening Soon",
       level: "National",
-      rating: 4.9,
     },
     {
       name: "CAT 2026",
@@ -31,7 +29,6 @@ const AllExamsPage = () => {
       date: "November 24, 2026",
       registrations: "Opening Soon",
       level: "National",
-      rating: 4.7,
     },
     {
       name: "GATE CS",
@@ -40,7 +37,6 @@ const AllExamsPage = () => {
       date: "February 3–11, 2026",
       registrations: "Closed",
       level: "National",
-      rating: 4.8,
     },
     {
       name: "CUET PG 2026",
@@ -49,7 +45,6 @@ const AllExamsPage = () => {
       date: "May 15–31, 2026",
       registrations: "Open",
       level: "National",
-      rating: 4.6,
     },
     {
       name: "CLAT 2026",
@@ -58,7 +53,6 @@ const AllExamsPage = () => {
       date: "December 3, 2026",
       registrations: "Open",
       level: "National",
-      rating: 4.5,
     },
     // Extra exams (only visible on this page)
     {
@@ -68,7 +62,6 @@ const AllExamsPage = () => {
       date: "May 18, 2026",
       registrations: "Opening Soon",
       level: "National",
-      rating: 4.9,
     },
     {
       name: "BITSAT 2026",
@@ -77,7 +70,6 @@ const AllExamsPage = () => {
       date: "May 21–30, 2026",
       registrations: "Opening Soon",
       level: "National",
-      rating: 4.6,
     },
     
     {
@@ -87,7 +79,6 @@ const AllExamsPage = () => {
       date: "June 15, 2026",
       registrations: "Opening Soon",
       level: "National",
-      rating: 4.7,
     },
     {
       name: "XAT 2026",
@@ -96,7 +87,6 @@ const AllExamsPage = () => {
       date: "January 5, 2026",
       registrations: "Closed",
       level: "National",
-      rating: 4.5,
     },
     
     {
@@ -106,7 +96,6 @@ const AllExamsPage = () => {
       date: "May 8 – June 1, 2026",
       registrations: "Open",
       level: "National",
-      rating: 4.7,
     },
     
    
@@ -117,7 +106,6 @@ const AllExamsPage = () => {
       date: "April 19–30, 2026",
       registrations: "Open",
       level: "National",
-      rating: 4.5,
     },
   ];
 

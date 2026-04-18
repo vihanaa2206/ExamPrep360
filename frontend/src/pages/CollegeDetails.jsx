@@ -14,6 +14,14 @@ import collegeAIIMS     from "../assets/college-aiims.jpg";
 import collegeIIM       from "../assets/college-iim.jpg";
 import bitcblog1 from "../assets/bitcblog1.jpg";
 import nitTrichyImg from "../assets/download.jpg";
+import collegejipmer from "../assets/jipmer-puducherry.jpg";
+import collegeIIMBangalore from "../assets/iim-bangalore.jpg";
+import collegeNLSIU from "../assets/nlsiu-bangalore.jpg";
+import collegeNLU from "../assets/nlu-delhi.jpg";
+import collegeIISC from "../assets/iisc-bangalore.jpg";
+import collegeIIITHyderabad from "../assets/iiit-hyderabad.jpg";
+import collegeLbsna from "../assets/college-lbsnaa-mussoorie.jpg";
+import collegeVIT from "../assets/vit-vellore.jpg";
 
 const LOCAL_IMAGES = {
   "iit-delhi":     collegeIITDelhi,
@@ -21,17 +29,25 @@ const LOCAL_IMAGES = {
   "aiims-delhi":   collegeAIIMS,
   "iim-ahmedabad": collegeIIM,
   "bits-pilani": bitcblog1,
- "nit-trichy": nitTrichyImg,
+  "nit-trichy": nitTrichyImg,
+  "jipmer-puducherry": collegejipmer,
+  "iim-bangalore": collegeIIMBangalore,
+  "nlsiu-bangalore": collegeNLSIU,
+  "nlu-delhi": collegeNLU,
+  "iisc-bangalore": collegeIISC,
+  "iiit-hyderabad": collegeIIITHyderabad,
+  "college-lbsnaa-mussoorie": collegeLbsna,
+  "vit-vellore": collegeVIT,
 };
 
 /* ── tab list ──────────────────────────────────────────────── */
 const TABS = [
-  { key: "overview",       label: "Overview",         icon: Building2 },
-  { key: "courses",        label: "Courses",          icon: BookOpen },
-  { key: "departments",    label: "Departments",      icon: GraduationCap },
-  { key: "fees",           label: "Fees Structure",   icon: IndianRupee },
+  { key: "overview",       label: "Overview",            icon: Building2 },
+  { key: "courses",        label: "Courses",             icon: BookOpen },
+  { key: "departments",    label: "Departments",         icon: GraduationCap },
+  { key: "fees",           label: "Fees Structure",      icon: IndianRupee },
   { key: "campus",         label: "Campus & Facilities", icon: Wifi },
-  { key: "administration", label: "Administration",   icon: Users },
+  { key: "administration", label: "Administration",      icon: Users },
 ];
 
 /* ── category colour map ───────────────────────────────────── */
@@ -55,16 +71,16 @@ const CollegeDetails = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-  setLoading(true);
-  fetch(`http://127.0.0.1:5000/api/colleges/${slug}`)
-    .then((r) => r.json())
-    .then((d) => { 
-      console.log("SLUG FROM BACKEND:", d.slug);  // 👈 YAHAN DAAL
-      setCollege(d); 
-      setLoading(false); 
-    })
-    .catch(() => setLoading(false));
-}, [slug]);
+    setLoading(true);
+    fetch(`http://127.0.0.1:5000/api/colleges/${slug}`)
+      .then((r) => r.json())
+      .then((d) => {
+        console.log("SLUG FROM BACKEND:", d.slug);
+        setCollege(d);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [slug]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">
@@ -89,15 +105,13 @@ const CollegeDetails = () => {
       {/* ── HERO BANNER ─────────────────────────────────────── */}
       <div className={`relative bg-gradient-to-r ${gradient} text-white overflow-hidden`}>
 
-        {/* bg image overlay */}
         {heroImg && (
           <img src={heroImg} alt={college.short_name}
-            className="absolute inset-0 w-full h-full object-cover opacity-20" />
+            className="absolute inset-0 w-full h-full object-cover opacity-40" />
         )}
 
         <div className="relative max-w-7xl mx-auto px-4 py-10">
 
-          {/* back button */}
           <button onClick={() => navigate("/colleges")}
             className="flex items-center gap-1 text-white/70 hover:text-white text-sm mb-6 transition">
             <ChevronLeft className="w-4 h-4" /> All Colleges
@@ -176,10 +190,10 @@ const CollegeDetails = () => {
             {/* quick stats box */}
             <div className="hidden lg:grid grid-cols-2 gap-3 flex-shrink-0">
               {[
-                { label: "Courses", value: college.courses?.length || "—" },
+                { label: "Courses",     value: college.courses?.length || "—" },
                 { label: "Departments", value: college.departments?.length || "—" },
-                { label: "Faculty", value: college.total_faculty || "—" },
-                { label: "Campus", value: college.campus_area || "—" },
+                { label: "Faculty",     value: college.total_faculty || "—" },
+                { label: "Campus",      value: college.campus_area || "—" },
               ].map((s) => (
                 <div key={s.label}
                   className="bg-white/10 backdrop-blur rounded-xl px-4 py-3 text-center min-w-[90px]">
@@ -246,7 +260,6 @@ const CollegeDetails = () => {
 const OverviewTab = ({ college }) => (
   <div className="space-y-6">
 
-    {/* Description */}
     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
         <Building2 className="w-5 h-5 text-blue-500" /> About {college.short_name}
@@ -254,7 +267,6 @@ const OverviewTab = ({ college }) => (
       <p className="text-gray-600 leading-relaxed">{college.description}</p>
     </div>
 
-    {/* Quick facts grid */}
     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Facts</h2>
       <div className="overflow-x-auto">
@@ -294,7 +306,6 @@ const OverviewTab = ({ college }) => (
       </div>
     </div>
 
-    {/* Exams accepted */}
     {college.exams_accepted?.length > 0 && (
       <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Exams Accepted</h2>
@@ -317,7 +328,6 @@ const OverviewTab = ({ college }) => (
 const CoursesTab = ({ college }) => (
   <div className="space-y-6">
 
-    {/* Course summary cards */}
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {college.courses?.map((c, i) => (
         <div key={i}
@@ -328,7 +338,6 @@ const CoursesTab = ({ college }) => (
       ))}
     </div>
 
-    {/* Detailed courses table */}
     {college.courses_detail?.length > 0 && (
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
@@ -355,13 +364,13 @@ const CoursesTab = ({ college }) => (
                   <td className="px-6 py-4 font-semibold text-gray-900">{course.name}</td>
                   <td className="px-4 py-4 text-center text-gray-700">{course.duration}</td>
                   <td className="px-4 py-4 text-center">
-                    <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">
+                    <span className="seats-badge bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">
                       {course.seats}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right font-semibold text-green-700">{course.fees_per_year}</td>
                   <td className="px-6 py-4">
-                    <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded">
+                    <span className="exam-badge bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded">
                       {course.exam}
                     </span>
                   </td>
@@ -386,7 +395,7 @@ const DepartmentsTab = ({ college }) => (
         <h2 className="text-lg font-bold text-gray-900">
           All Departments
         </h2>
-        <span className="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">
+        <span className="dept-count-badge bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">
           {college.departments?.length || 0} Departments
         </span>
       </div>
@@ -437,7 +446,6 @@ const FeesTab = ({ college }) => {
   return (
     <div className="space-y-6">
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {rows.slice(0, 3).map((r) => (
           <div key={r.label} className={`border rounded-2xl p-5 ${r.color}`}>
@@ -448,7 +456,6 @@ const FeesTab = ({ college }) => {
         ))}
       </div>
 
-      {/* Full fees table */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">Complete Fees Breakdown</h2>
@@ -484,7 +491,6 @@ const FeesTab = ({ college }) => {
         </div>
       </div>
 
-      {/* Note */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
         <span className="font-semibold">📌 Note:</span> Fees mentioned are indicative and may vary per academic year.
         Always verify from the official college website before applying.
@@ -501,29 +507,28 @@ const CampusTab = ({ college }) => {
   if (!cf) return <p className="text-gray-500">Campus information not available.</p>;
 
   const facilityItems = [
-    { label: "Total Campus Area",   value: cf.total_area,         icon: <Building2 className="w-5 h-5 text-blue-500" /> },
-    { label: "Hostels",             value: cf.hostels,            icon: <Building2 className="w-5 h-5 text-orange-500" /> },
-    { label: "Hostel Capacity",     value: cf.hostel_capacity,    icon: <Users className="w-5 h-5 text-purple-500" /> },
-    { label: "Library",             value: cf.library,            icon: <Library className="w-5 h-5 text-red-500" /> },
-    { label: "Sports Facilities",   value: cf.sports,             icon: <Dumbbell className="w-5 h-5 text-green-500" /> },
-    { label: "Medical / Hospital",  value: cf.medical,            icon: <HeartPulse className="w-5 h-5 text-red-500" /> },
-    { label: "Transport",           value: cf.transport,          icon: <Bus className="w-5 h-5 text-yellow-600" /> },
-    { label: "Internet & Network",  value: cf.internet,           icon: <Wifi className="w-5 h-5 text-cyan-500" /> },
-    { label: "Banks & ATMs",        value: cf.banks,              icon: <IndianRupee className="w-5 h-5 text-green-600" /> },
-    { label: "Shopping & Dining",   value: cf.shopping,           icon: <ShoppingBag className="w-5 h-5 text-pink-500" /> },
-    { label: "Auditorium / Events", value: cf.auditorium,         icon: <Mic2 className="w-5 h-5 text-indigo-500" /> },
+    { label: "Total Campus Area",   value: cf.total_area,      icon: <Building2 className="w-5 h-5 text-blue-500" /> },
+    { label: "Hostels",             value: cf.hostels,         icon: <Building2 className="w-5 h-5 text-orange-500" /> },
+    { label: "Hostel Capacity",     value: cf.hostel_capacity, icon: <Users className="w-5 h-5 text-purple-500" /> },
+    { label: "Library",             value: cf.library,         icon: <Library className="w-5 h-5 text-red-500" /> },
+    { label: "Sports Facilities",   value: cf.sports,          icon: <Dumbbell className="w-5 h-5 text-green-500" /> },
+    { label: "Medical / Hospital",  value: cf.medical,         icon: <HeartPulse className="w-5 h-5 text-red-500" /> },
+    { label: "Transport",           value: cf.transport,       icon: <Bus className="w-5 h-5 text-yellow-600" /> },
+    { label: "Internet & Network",  value: cf.internet,        icon: <Wifi className="w-5 h-5 text-cyan-500" /> },
+    { label: "Banks & ATMs",        value: cf.banks,           icon: <IndianRupee className="w-5 h-5 text-green-600" /> },
+    { label: "Shopping & Dining",   value: cf.shopping,        icon: <ShoppingBag className="w-5 h-5 text-pink-500" /> },
+    { label: "Auditorium / Events", value: cf.auditorium,      icon: <Mic2 className="w-5 h-5 text-indigo-500" /> },
   ].filter(f => f.value);
 
   return (
     <div className="space-y-6">
 
-      {/* Top 4 stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Campus Area",  value: cf.total_area,       bg: "bg-blue-50",   text: "text-blue-700" },
-          { label: "Hostels",      value: cf.hostels?.split("(")[0].trim(), bg: "bg-orange-50", text: "text-orange-700" },
-          { label: "Capacity",     value: cf.hostel_capacity,  bg: "bg-purple-50", text: "text-purple-700" },
-          { label: "Sports",       value: cf.sports?.split(",")[0] + "…", bg: "bg-green-50",  text: "text-green-700" },
+          { label: "Campus Area", value: cf.total_area,                          bg: "bg-blue-50",   text: "text-blue-700" },
+          { label: "Hostels",     value: cf.hostels?.split("(")[0].trim(),       bg: "bg-orange-50", text: "text-orange-700" },
+          { label: "Capacity",    value: cf.hostel_capacity,                     bg: "bg-purple-50", text: "text-purple-700" },
+          { label: "Sports",      value: cf.sports?.split(",")[0] + "…",         bg: "bg-green-50",  text: "text-green-700" },
         ].map((s) => (
           <div key={s.label} className={`${s.bg} rounded-2xl p-4 border border-gray-200`}>
             <p className={`text-xs font-semibold uppercase tracking-wide ${s.text} mb-1`}>{s.label}</p>
@@ -532,7 +537,6 @@ const CampusTab = ({ college }) => {
         ))}
       </div>
 
-      {/* Full facilities table */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">Campus Facilities — Detailed</h2>
@@ -580,7 +584,6 @@ const AdministrationTab = ({ college }) => {
         {admins.slice(0, 3).map((person, i) => (
           <div key={i}
             className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
-            {/* Avatar */}
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
                             flex items-center justify-center text-white text-xl font-black mb-4">
               {person.name?.charAt(0)}
@@ -605,7 +608,7 @@ const AdministrationTab = ({ college }) => {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">Complete Administration Directory</h2>
-          <span className="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">
+          <span className="members-badge bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full">
             {admins.length} Members
           </span>
         </div>
@@ -625,7 +628,7 @@ const AdministrationTab = ({ college }) => {
                 <tr key={i} className={`hover:bg-blue-50/30 transition ${i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}`}>
                   <td className="px-6 py-4 text-gray-400 font-medium">{i + 1}</td>
                   <td className="px-6 py-4">
-                    <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded">
+                    <span className="designation-badge bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded">
                       {person.designation}
                     </span>
                   </td>

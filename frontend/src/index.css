@@ -1,3 +1,522 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================
+   LIGHT MODE — Cream + White + Light Orange
+   ============================================ */
+:root {
+  --bg-primary: #fffaf4;
+  --bg-secondary: #fff8f0;
+  --bg-accent: #fff0dc;
+  --bg-nav: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #1a0a00;
+  --text-secondary: #4a2e1a;
+  --text-muted: #8c6a4f;
+  --border-color: #f0d9c0;
+  --accent-color: #f97316;
+  --search-bg: #ffffff;
+  --search-border: #fbd0a0;
+  --search-text: #1a0a00;
+  --search-placeholder: #b08060;
+  --icon-color: #c2410c;
+  --link-color: #f97316;
+}
+
+/* ============================================
+   DARK MODE — Deep Navy + Gold + Green accents
+   ============================================ */
+.dark {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #1e1e38;
+  --bg-accent: #222240;
+  --bg-nav: #12122a;
+  --bg-card: #1e1e38;
+  --text-primary: #fde68a;
+  --text-secondary: #e2c97e;
+  --text-muted: #a89060;
+  --border-color: #3d3520;
+  --accent-color: #f59e0b;
+  --search-bg: #16163a;
+  --search-border: #4b3f20;
+  --search-text: #fde68a;
+  --search-placeholder: #7a6840;
+  --icon-color: #fbbf24;
+  --link-color: #f59e0b;
+}
+
+/* ============================================
+   GLOBAL BASE
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-secondary) !important;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+}
+
+/* ============================================
+   SEARCH BAR — blue ring/highlight remove
+   ============================================ */
+input, select, textarea {
+  outline: none !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+  --tw-ring-color: transparent !important;
+}
+
+.dark input, .dark select, .dark textarea {
+  background-color: var(--search-bg) !important;
+  color: var(--search-text) !important;
+  border-color: var(--search-border) !important;
+}
+
+.dark input::placeholder, .dark textarea::placeholder {
+  color: var(--search-placeholder) !important;
+}
+
+.dark input:focus {
+  border-color: #6b5a30 !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+}
+
+/* ============================================
+   NAVBAR
+   ============================================ */
+header, nav {
+  background-color: var(--bg-nav) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* ============================================
+   HEADINGS
+   ============================================ */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: var(--text-primary) !important;
+}
+
+/* ============================================
+   DARK MODE — Force all white/light backgrounds dark
+   ============================================ */
+.dark body,
+.dark #root {
+  background-color: var(--bg-primary) !important;
+}
+
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-slate-50,
+.dark .bg-slate-100 {
+  background-color: var(--bg-card) !important;
+}
+
+.dark section {
+  background-color: var(--bg-primary) !important;
+}
+
+/* ============================================
+   DARK MODE — Text colors
+   ============================================ */
+.dark p, .dark span:not(.keep-color), .dark li, .dark label {
+  color: var(--text-secondary) !important;
+}
+
+.dark [class*="text-gray-"],
+.dark [class*="text-slate-"] {
+  color: var(--text-muted) !important;
+}
+
+.dark [class*="text-gray-900"],
+.dark [class*="text-slate-800"],
+.dark [class*="text-slate-900"] {
+  color: var(--text-primary) !important;
+}
+
+/* ============================================
+   DARK MODE — Borders
+   ============================================ */
+.dark [class*="border-gray-"],
+.dark [class*="border-slate-"] {
+  border-color: var(--border-color) !important;
+}
+
+/* ============================================
+   FEATURED EXAMS — Category badge fix
+   ============================================ */
+.dark .bg-blue-100 { background-color: #1a2a4a !important; }
+.dark .text-blue-600 { color: #93c5fd !important; }
+.dark .text-blue-700 { color: #93c5fd !important; }
+
+.dark .bg-green-100 { background-color: #1a3a1a !important; }
+.dark .text-green-700 { color: #86efac !important; }
+
+.dark .bg-orange-100 { background-color: #3a2010 !important; }
+.dark .text-orange-700 { color: #fdba74 !important; }
+
+.dark .bg-gray-100 { background-color: #2a2a3a !important; }
+.dark .text-gray-600 { color: #a89060 !important; }
+
+.dark .hover\:border-blue-300:hover {
+  border-color: #86efac !important;
+}
+
+/* Exam card border-t divider */
+.dark .border-t.border-gray-200 {
+  border-color: var(--border-color) !important;
+}
+
+/* ============================================
+   DARK MODE — View Details link (StreamPage)
+   No background, just gold text
+   ============================================ */
+.dark .view-details-link {
+  color: #fde68a !important;
+  background: none !important;
+  background-color: transparent !important;
+}
+
+/* ============================================
+   DARK MODE — Level badge (National/State/University)
+   ============================================ */
+.dark .level-badge {
+  background-color: #2a2a4a !important;
+  color: #c8b8ff !important;
+  border: 1px solid #4a4a7a55 !important;
+}
+
+/* ============================================
+   DARK MODE — Designation badge (Administration table)
+   ============================================ */
+.dark .designation-badge {
+  background-color: #1a2a4a !important;
+  color: #93c5fd !important;
+  border: none !important;
+}
+
+/* ============================================
+   DARK MODE — Seats badge in CoursesTab
+   ============================================ */
+.dark .seats-badge {
+  background-color: #1a2a4a !important;
+  color: #93c5fd !important;
+}
+
+/* ============================================
+   DARK MODE — Exam badge in CoursesTab
+   ============================================ */
+.dark .exam-badge {
+  background-color: #2a1a4a !important;
+  color: #c4b5fd !important;
+}
+
+/* ============================================
+   DARK MODE — Members / Departments count badge
+   ============================================ */
+.dark .members-badge,
+.dark .dept-count-badge {
+  background-color: #1a2a4a !important;
+  color: #93c5fd !important;
+}
+
+/* ============================================
+   DARK MODE — General links/buttons text-blue-600
+   Only anchor and button, NOT span (no highlight)
+   ============================================ */
+.dark a.text-blue-600,
+.dark button.text-blue-600 {
+  color: #fde68a !important;
+  background: none !important;
+}
+
+/* ============================================
+   DARK MODE — Table text
+   ============================================ */
+.dark td .text-gray-400,
+.dark td.text-gray-400 { color: #7a6840 !important; }
+
+.dark td .text-gray-900,
+.dark td .font-semibold { color: #fde68a !important; }
+
+.dark td .text-gray-600,
+.dark td.text-gray-600 { color: #e2c97e !important; }
+
+/* ============================================
+   ADMIN PANEL — Complete dark mode
+   ============================================ */
+.dark aside.bg-slate-900 {
+  background-color: #0f0f1f !important;
+  border-right: 1px solid #2a2a4a !important;
+}
+
+.dark aside .text-slate-400 {
+  color: #a89060 !important;
+}
+
+.dark aside .bg-indigo-600 {
+  background-color: #1a3a1a !important;
+  color: #86efac !important;
+  box-shadow: none !important;
+}
+
+.dark aside .hover\:bg-slate-800:hover {
+  background-color: #1e1e38 !important;
+  color: #fde68a !important;
+}
+
+.dark .bg-grey-50,
+.dark .min-h-screen.bg-slate-50 {
+  background-color: var(--bg-primary) !important;
+}
+
+.dark .text-slate-800 { color: var(--text-primary) !important; }
+.dark .text-slate-600 { color: var(--text-secondary) !important; }
+.dark .text-slate-500 { color: var(--text-muted) !important; }
+.dark .text-slate-400 { color: #7a6840 !important; }
+
+.dark .bg-white.rounded-2xl,
+.dark .bg-white.rounded-xl {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark .bg-blue-500    { background-color: #10172b !important; }
+.dark .bg-emerald-500 { background-color: #059669 !important; }
+.dark .bg-red-500     { background-color: #dc2626 !important; }
+.dark .bg-violet-500  { background-color: #7c3aed !important; }
+
+.dark .border-slate-100 { border-color: var(--border-color) !important; }
+.dark .border-slate-200 { border-color: #3d3520 !important; }
+
+/* ============================================
+   ADMIN TABLE — Complete fix
+   ============================================ */
+.dark table {
+  background-color: var(--bg-card) !important;
+}
+
+.dark thead tr,
+.dark .bg-slate-800 {
+  background-color: #12122a !important;
+}
+
+.dark thead th,
+.dark .bg-slate-800 th {
+  color: #fde68a !important;
+  border-color: #2a2a4a !important;
+}
+
+.dark tbody tr {
+  background-color: var(--bg-card) !important;
+  border-color: #2a2a4a !important;
+}
+
+.dark tbody tr:hover,
+.dark .hover\:bg-slate-50:hover {
+  background-color: #222240 !important;
+}
+
+.dark .divide-slate-100 > * {
+  border-color: #2a2a4a !important;
+}
+
+.dark td {
+  color: var(--text-secondary) !important;
+}
+
+/* ============================================
+   ADMIN — Role & Status Badges
+   ============================================ */
+.dark .bg-violet-100,
+.dark span.bg-violet-100 {
+  background-color: #2a1a4a !important;
+  color: #c4b5fd !important;
+}
+.dark .text-violet-700 { color: #c4b5fd !important; }
+
+.dark .bg-emerald-100,
+.dark span.bg-emerald-100 {
+  background-color: #1a3a1a !important;
+  color: #6ee7b7 !important;
+}
+.dark .text-emerald-700 { color: #6ee7b7 !important; }
+.dark .bg-emerald-500 { background-color: #059669 !important; }
+
+.dark .bg-emerald-500.rounded-full { background-color: #34d399 !important; }
+.dark .bg-red-500.rounded-full     { background-color: #f87171 !important; }
+.dark .bg-orange-500.rounded-full  { background-color: #fb923c !important; }
+
+.dark .bg-red-100 { background-color: #3a1a1a !important; }
+.dark .text-red-700 { color: #fca5a5 !important; }
+.dark .text-red-600 { color: #f87171 !important; }
+
+.dark .bg-orange-100 { background-color: #3a2010 !important; }
+.dark .text-orange-700 { color: #fdba74 !important; }
+
+/* ============================================
+   ADMIN — Action Buttons
+   ============================================ */
+.dark .bg-violet-100.text-violet-700 {
+  background-color: #2a1a4a !important;
+  color: #c4b5fd !important;
+  border: 1px solid #4a2a8a44 !important;
+}
+.dark .hover\:bg-violet-200:hover {
+  background-color: #3a2a5a !important;
+}
+
+.dark .bg-orange-100.text-orange-700 {
+  background-color: #3a2010 !important;
+  color: #fdba74 !important;
+}
+.dark .hover\:bg-orange-200:hover {
+  background-color: #4a3010 !important;
+}
+
+.dark .bg-emerald-100.text-emerald-700 {
+  background-color: #1a3a1a !important;
+  color: #6ee7b7 !important;
+}
+
+.dark .bg-red-100.text-red-600 {
+  background-color: #3a1a1a !important;
+  color: #fca5a5 !important;
+}
+
+.dark .bg-slate-100.text-slate-600 {
+  background-color: #2a2a4a !important;
+  color: #e2c97e !important;
+}
+.dark .bg-slate-800.text-white {
+  background-color: #1a3a1a !important;
+  color: #86efac !important;
+}
+
+/* ============================================
+   ADMIN — Detail expand panel
+   ============================================ */
+.dark .bg-gradient-to-br.from-slate-50 {
+  background: #16163a !important;
+}
+
+.dark .bg-white.rounded-xl.border.border-slate-100 {
+  background-color: #1e1e38 !important;
+  border-color: #2a2a4a !important;
+}
+
+.dark .text-slate-800 { color: #fde68a !important; }
+
+/* ============================================
+   ADMIN — Select dropdowns
+   ============================================ */
+.dark select {
+  background-color: var(--search-bg) !important;
+  color: var(--search-text) !important;
+  border-color: var(--search-border) !important;
+}
+
+.dark select option {
+  background-color: #1e1e38 !important;
+  color: #fde68a !important;
+}
+
+/* ============================================
+   ADMIN — Pagination
+   ============================================ */
+.dark .border-t.border-slate-100 {
+  border-color: var(--border-color) !important;
+  background-color: var(--bg-card) !important;
+}
+
+.dark .text-slate-500 { color: var(--text-muted) !important; }
+
+.dark button.text-slate-500,
+.dark button.text-slate-600 {
+  color: #e2c97e !important;
+}
+
+.dark button:hover.hover\:bg-slate-100 {
+  background-color: #2a2a4a !important;
+}
+
+.dark .bg-slate-800.text-white {
+  background-color: #1a3a1a !important;
+  color: #86efac !important;
+}
+
+/* ============================================
+   ADMIN — Add Exam button
+   ============================================ */
+.dark .bg-indigo-600 {
+  background-color: #1a3a1a !important;
+  color: #86efac !important;
+}
+.dark .hover\:bg-indigo-700:hover {
+  background-color: #2a4a2a !important;
+}
+
+/* ============================================
+   SCROLLBAR (dark mode)
+   ============================================ */
+.dark ::-webkit-scrollbar { width: 6px; }
+.dark ::-webkit-scrollbar-track { background: #1a1a2e; }
+.dark ::-webkit-scrollbar-thumb { background: #4b3f20; border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+
+/* ============================================
+   ADMIN DASHBOARD — white screen fix
+   ============================================ */
+.dark .space-y-8 > div.bg-white,
+.dark [class*="admin"] .bg-white {
+  background-color: #1e1e38 !important;
+  border-color: #3d3520 !important;
+}
+
+.dark a.group:hover {
+  box-shadow: 0 8px 30px rgba(253, 230, 138, 0.08) !important;
+}
+
+/* ============================================
+   ADMIN LAYOUT — main content area bg fix
+   ============================================ */
+.dark .flex-1.overflow-auto,
+.dark .flex-1.p-6,
+.dark main.flex-1 {
+  background-color: #1a1a2e !important;
+}
+
+.dark .flex.h-screen,
+.dark .flex.min-h-screen {
+  background-color: #1a1a2e !important;
+}
+
+/* ============================================
+   ADMIN SIDEBAR — Light mode only
+   Scoped to admin layout aside (bg-slate-900 class)
+   NOT applied to AllColleges filter sidebar
+   ============================================ */
+aside.bg-slate-900 {
+  background-color: #75767a !important;
+  border-right: 1px solid #343539 !important;
+}
+
+aside.bg-slate-900 .text-slate-700,
+aside.bg-slate-900 .text-slate-600 {
+  color: #252c35 !important;
+}
+
+aside.bg-slate-900 .hover\:bg-slate-300:hover {
+  background-color: #4f5256 !important;
+}

@@ -12,7 +12,6 @@ const FeaturedExams = () => {
       date: "January 24 - February 1, 2026",
       registrations: "Open",
       level: "National",
-      rating: 4.8,
     },
     {
       name: "NEET UG",
@@ -21,7 +20,6 @@ const FeaturedExams = () => {
       date: "May 5, 2026",
       registrations: "Opening Soon",
       level: "National",
-      rating: 4.9,
     },
     {
       name: "CAT 2026",
@@ -30,7 +28,6 @@ const FeaturedExams = () => {
       date: "November 24, 2026",
       registrations: "Opening Soon",
       level: "National",
-      rating: 4.7,
     },
     {
       name: "GATE CS",
@@ -39,7 +36,6 @@ const FeaturedExams = () => {
       date: "February 3–11, 2026",
       registrations: "Closed",
       level: "National",
-      rating: 4.8,
     },
     {
       name: "CUET PG 2026",
@@ -48,7 +44,6 @@ const FeaturedExams = () => {
       date: "May 15–31, 2026",
       registrations: "Open",
       level: "National",
-      rating: 4.6,
     },
     {
       name: "CLAT 2026",
@@ -57,7 +52,6 @@ const FeaturedExams = () => {
       date: "December 3, 2026",
       registrations: "Open",
       level: "National",
-      rating: 4.5,
     },
   ];
 

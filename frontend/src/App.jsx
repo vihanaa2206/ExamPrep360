@@ -52,8 +52,12 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
 import Advertise from "./pages/Advertise";
 import AdminProfile from "./admin/pages/AdminProfile";
+import PricingPage from "./pages/PricingPage";
+import AdminPayments from "./admin/pages/AdminPayments";
+import AdminFeedbacks from "./admin/pages/AdminFeedbacks";
+import AdminAIChatLogs from "./admin/pages/AdminAIChatLogs";
 
-// ✅ Helper component — redirects admin to /admin/profile automatically
+
 function ProfileRoute() {
   const stored = localStorage.getItem("user");
   try {
@@ -109,8 +113,9 @@ function App() {
         <Route path="/forgot-password"    element={<ForgotPassword />} />
         <Route path="/verify-otp"         element={<VerifyOtp />} />
         <Route path="/reset-password"     element={<ResetPassword />} />
+        <Route path="/pricing"            element={<PricingPage />} />
 
-        {/* ✅ Profile route — admin gets redirected to /admin/profile automatically */}
+        {/* Profile — admin gets redirected to /admin/profile */}
         <Route path="/profile" element={<ProfileRoute />} />
 
         {/* EXAMS */}
@@ -149,7 +154,7 @@ function App() {
         <Route path="/account-blocked"   element={<AccountSuspended status="blocked" />} />
         <Route path="/account-suspended" element={<AccountSuspended status="suspended" />} />
 
-        {/* ADMIN */}
+        {/* ADMIN — all children use RELATIVE paths inside /admin */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="dashboard"       element={<AdminDashboard />} />
           <Route path="profile"         element={<AdminProfile />} />
@@ -164,6 +169,11 @@ function App() {
           <Route path="pyqs"            element={<AdminPYQs />} />
           <Route path="reports"         element={<AdminReports />} />
           <Route path="pyq"             element={<Navigate to="/admin/pyqs" replace />} />
+          {/* FIX: was absolute path "/admin/payments" → now relative "payments" */}
+          <Route path="payments"        element={<AdminPayments />} />
+          <Route path="feedbacks"       element={<AdminFeedbacks />} />
+          {/* FIX: was absolute "/admin/ai-chat-logs" → now relative "ai-chat-logs" */}
+          <Route path="ai-chat-logs"    element={<AdminAIChatLogs />} />
         </Route>
 
       </Routes>

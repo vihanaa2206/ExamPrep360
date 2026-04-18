@@ -9,13 +9,13 @@ const Hero = () => {
   const [showVideo, setShowVideo] = useState(false);
 
   const popularTools = [
-    { label: "Free Mock Tests",      badge: "NEW",     color: "bg-orange-500", path: "/free-tests" },
+    { label: "Mock Tests",      badge: "NEW",     color: "bg-orange-500", path: "/free-tests" },
     { label: "Previous Year Papers", badge: "POPULAR", color: "bg-blue-500",   path: "/previous-year-papers" },
   ];
 
   return (
     <>
-      <section className="bg-gradient-to-b from-sky-50 to-white py-12 md:py-16">
+      <section className="py-12 md:py-16" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Left Content */}
@@ -30,7 +30,7 @@ const Hero = () => {
                 <input
                   type="text"
                   placeholder="Search Colleges, Exams, Courses & more"
-                  className="w-full px-5 py-4 pr-12 text-foreground placeholder:text-muted-foreground bg-white border border-border rounded-xl outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+                  className="w-full px-5 py-4 pr-12 rounded-xl outline-none transition-all"style={{backgroundColor: 'var(--search-bg)',border: '1px solid var(--search-border)',color: 'var(--search-text)',}}
                 />
                 <button className="absolute right-4 top-1/2 -translate-y-1/2 text-primary hover:text-primary/80 transition-colors">
                   <Search className="w-5 h-5" />
@@ -43,7 +43,7 @@ const Hero = () => {
                   <div
                     key={index}
                     onClick={() => navigate(tool.path)}
-                    className="flex items-center gap-3 px-4 py-3 bg-white border border-border rounded-lg cursor-pointer hover:border-primary/30 hover:shadow-md transition-all"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer hover:shadow-md transition-all"style={{backgroundColor: 'var(--bg-card)',border: '1px solid var(--border-color)',}}
                   >
                     <span className={`px-2 py-0.5 text-xs font-bold text-white rounded ${tool.color}`}>
                       {tool.badge}

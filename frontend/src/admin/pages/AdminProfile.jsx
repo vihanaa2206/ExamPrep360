@@ -10,7 +10,6 @@ export default function AdminProfile() {
   const [tab, setTab] = useState("profile");
 
   const [user, setUser]       = useState(null);
-  // ✅ Only basic fields — NO target_exam, NO designation, NO institute_name
   const [form, setForm]       = useState({ name:"", email:"", phone:"", city:"", state:"" });
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,7 +32,6 @@ export default function AdminProfile() {
     if (!stored || !token) { navigate("/login"); return; }
     try {
       const u = JSON.parse(stored);
-      // ✅ Redirect non-admins away
       if (u.role !== "admin") { navigate("/profile"); return; }
       setUser(u);
       setForm({
@@ -48,7 +46,6 @@ export default function AdminProfile() {
 
   const getToken = () => localStorage.getItem("token");
 
-  // ── Avatar ──────────────────────────────────────────────────────────────
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -71,11 +68,9 @@ export default function AdminProfile() {
     reader.readAsDataURL(file);
   };
 
-  // ── Save profile ─────────────────────────────────────────────────────────
   const handleSave = async () => {
     setLoading(true); setMsg({ text:"", type:"" });
     try {
-      // ✅ Only sends name, phone, city, state — no target_exam
       const res = await axios.put(`${BASE}/users/profile`,
         { name: form.name, phone: form.phone, city: form.city, state: form.state },
         { headers: { Authorization: `Bearer ${getToken()}` } });
@@ -92,7 +87,6 @@ export default function AdminProfile() {
     } finally { setLoading(false); }
   };
 
-  // ── Change password ───────────────────────────────────────────────────────
   const handlePasswordChange = async () => {
     setPwMsg({ text:"", type:"" });
     if (!pwForm.current) { setPwMsg({ text:"Enter current password", type:"error" }); return; }
@@ -114,7 +108,6 @@ export default function AdminProfile() {
     } finally { setPwLoading(false); }
   };
 
-  // ── Delete account ────────────────────────────────────────────────────────
   const handleDeleteAccount = async () => {
     if (deleteInput !== "DELETE") { alert('Type "DELETE" to confirm'); return; }
     setDeleteLoading(true);
@@ -129,7 +122,7 @@ export default function AdminProfile() {
   };
 
   if (!user) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
       <div className="text-gray-400">Loading...</div>
     </div>
   );
@@ -165,14 +158,14 @@ export default function AdminProfile() {
   const navItems = [
     { key:"profile",  icon:"👤", label:"My Profile"     },
     { key:"password", icon:"🔒", label:"Change Password" },
-    // ✅ NO feedback tab for admin
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-violet-50 py-8 px-4">
+    // FIX: removed light gradient bg — now fully dark-theme compatible
+    <div className="min-h-screen bg-transparent py-8 px-4">
       <div className="max-w-5xl mx-auto">
 
-        {/* ─── Hero Banner ─── */}
+        {/* Hero Banner */}
         <div className={`bg-gradient-to-r ${pal.bg} rounded-3xl p-6 mb-6 text-white shadow-xl`}>
           <div className="flex items-center gap-5">
 
@@ -204,7 +197,7 @@ export default function AdminProfile() {
                 className="hidden" onChange={handleAvatarChange}/>
             </div>
 
-            {/* Name + badges — ✅ NO Student/designation badges */}
+            {/* Name + badges */}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-black tracking-tight">{user.name || "Admin"}</h1>
               <p className="text-white/80 text-sm mt-0.5">{user.email}</p>
@@ -215,7 +208,7 @@ export default function AdminProfile() {
               </div>
             </div>
 
-            {/* ✅ Only City + State chips — NO Target */}
+            {/* City + State chips */}
             <div className="hidden md:flex gap-3">
               {[
                 { label:"City",  val: user.city  || "—" },
@@ -233,17 +226,17 @@ export default function AdminProfile() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          {/* ─── Sidebar ─── */}
+          {/* Sidebar */}
           <div className="space-y-4">
 
             {/* Nav tabs */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white/10 dark:bg-slate-800 rounded-2xl shadow-sm border border-white/10 overflow-hidden">
               {navItems.map(n => (
                 <button key={n.key} onClick={() => setTab(n.key)}
-                  className={`w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold transition text-left border-b border-gray-50 last:border-0
+                  className={`w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold transition text-left border-b border-white/10 last:border-0
                     ${tab === n.key
                       ? `bg-gradient-to-r ${pal.bg} text-white`
-                      : "text-gray-600 hover:bg-gray-50"}`}>
+                      : "text-gray-300 hover:bg-white/10"}`}>
                   <span className="text-base">{n.icon}</span>
                   <span>{n.label}</span>
                   {tab === n.key && <span className="ml-auto">→</span>}
@@ -252,7 +245,7 @@ export default function AdminProfile() {
             </div>
 
             {/* Account Info + Delete */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+            <div className="bg-white/10 dark:bg-slate-800 rounded-2xl shadow-sm border border-white/10 p-4">
               <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Account Info</p>
               <div className="space-y-2 mb-4">
                 {[
@@ -261,28 +254,28 @@ export default function AdminProfile() {
                   { label:"Status",       val: user.status || "Active"                  },
                 ].map(i => (
                   <div key={i.label}
-                    className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                    className="flex items-center justify-between py-1.5 border-b border-white/10 last:border-0">
                     <span className="text-xs text-gray-400">{i.label}</span>
-                    <span className="text-xs font-bold text-gray-700 capitalize">{i.val}</span>
+                    <span className="text-xs font-bold text-gray-200 capitalize">{i.val}</span>
                   </div>
                 ))}
               </div>
               <button onClick={() => setShowDeleteConfirm(true)}
-                className="w-full py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-200 hover:bg-red-100 transition flex items-center justify-center gap-2">
+                className="w-full py-2 bg-red-500/10 text-red-400 text-xs font-bold rounded-xl border border-red-500/30 hover:bg-red-500/20 transition flex items-center justify-center gap-2">
                 🗑️ Delete Account
               </button>
             </div>
           </div>
 
-          {/* ─── Main Panel ─── */}
+          {/* Main Panel */}
           <div className="md:col-span-2 space-y-4">
 
-            {/* ══ PROFILE TAB ══ */}
+            {/* PROFILE TAB */}
             {tab === "profile" && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="bg-white/10 dark:bg-slate-800 rounded-2xl shadow-sm border border-white/10 p-6">
                 <div className="flex items-start justify-between mb-6">
                   <div>
-                    <h2 className="text-lg font-black text-gray-900">Personal Information</h2>
+                    <h2 className="text-lg font-black text-white">Personal Information</h2>
                     <p className="text-sm text-gray-400 mt-0.5">Update your details below</p>
                   </div>
                   {!editing
@@ -294,7 +287,7 @@ export default function AdminProfile() {
                     : <div className="flex gap-2">
                         <button
                           onClick={() => { setEditing(false); setMsg({ text:"", type:"" }); }}
-                          className="px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition">
+                          className="px-4 py-2 text-sm font-semibold border border-white/20 rounded-xl text-gray-300 hover:bg-white/10 transition">
                           Cancel
                         </button>
                         <button onClick={handleSave} disabled={loading}
@@ -308,13 +301,12 @@ export default function AdminProfile() {
                 {msg.text && (
                   <div className={`mb-5 px-4 py-3 rounded-xl text-sm font-semibold border flex items-center gap-2
                     ${msg.type === "success"
-                      ? "bg-green-50 text-green-700 border-green-200"
-                      : "bg-red-50 text-red-600 border-red-200"}`}>
+                      ? "bg-green-500/10 text-green-400 border-green-500/30"
+                      : "bg-red-500/10 text-red-400 border-red-500/30"}`}>
                     {msg.type === "success" ? "✅" : "❌"} {msg.text}
                   </div>
                 )}
 
-                {/* ✅ 5 fields only — Name, Email, Phone, City, State. NO target_exam, NO designation, NO institute */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     { label:"Full Name", key:"name",  type:"text",  placeholder:"Your full name",  disabled:false, icon:"👤" },
@@ -324,10 +316,10 @@ export default function AdminProfile() {
                     { label:"State",     key:"state", type:"text",  placeholder:"Your state",      disabled:false, icon:"📍" },
                   ].map(f => (
                     <div key={f.key}>
-                      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+                      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wide">
                         <span>{f.icon}</span> {f.label}
                         {f.disabled && (
-                          <span className="normal-case font-normal text-gray-300 ml-1">(cannot edit)</span>
+                          <span className="normal-case font-normal text-gray-500 ml-1">(cannot edit)</span>
                         )}
                       </label>
                       {editing && !f.disabled
@@ -336,12 +328,12 @@ export default function AdminProfile() {
                             value={form[f.key]}
                             onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                             placeholder={f.placeholder}
-                            className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition"/>
+                            className="w-full px-4 py-2.5 border-2 border-white/20 bg-white/10 text-white rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition placeholder-gray-500"/>
                         : <div className={`px-4 py-2.5 rounded-xl text-sm border
                             ${f.disabled
-                              ? "bg-gray-50 border-gray-100 text-gray-500"
-                              : "bg-gradient-to-r from-gray-50 to-slate-50 border-gray-100 text-gray-800 font-medium"}`}>
-                            {form[f.key] || <span className="text-gray-300 italic text-xs">Not provided</span>}
+                              ? "bg-white/5 border-white/10 text-gray-500"
+                              : "bg-white/5 border-white/10 text-gray-200 font-medium"}`}>
+                            {form[f.key] || <span className="text-gray-600 italic text-xs">Not provided</span>}
                           </div>
                       }
                     </div>
@@ -350,15 +342,15 @@ export default function AdminProfile() {
               </div>
             )}
 
-            {/* ══ PASSWORD TAB ══ */}
+            {/* PASSWORD TAB */}
             {tab === "password" && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="bg-white/10 dark:bg-slate-800 rounded-2xl shadow-sm border border-white/10 p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pal.bg} flex items-center justify-center text-white text-lg shadow-sm`}>
                     🔒
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-gray-900">Change Password</h2>
+                    <h2 className="text-lg font-black text-white">Change Password</h2>
                     <p className="text-sm text-gray-400">Keep your account secure</p>
                   </div>
                 </div>
@@ -366,8 +358,8 @@ export default function AdminProfile() {
                 {pwMsg.text && (
                   <div className={`mb-5 px-4 py-3 rounded-xl text-sm font-semibold border flex items-center gap-2
                     ${pwMsg.type === "success"
-                      ? "bg-green-50 text-green-700 border-green-200"
-                      : "bg-red-50 text-red-600 border-red-200"}`}>
+                      ? "bg-green-500/10 text-green-400 border-green-500/30"
+                      : "bg-red-500/10 text-red-400 border-red-500/30"}`}>
                     {pwMsg.type === "success" ? "✅" : "❌"} {pwMsg.text}
                   </div>
                 )}
@@ -379,7 +371,7 @@ export default function AdminProfile() {
                     { label:"Confirm Password",  key:"confirm",placeholder:"Repeat new password"    },
                   ].map(f => (
                     <div key={f.key}>
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+                      <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wide">
                         {f.label}
                       </label>
                       <div className="relative">
@@ -388,7 +380,7 @@ export default function AdminProfile() {
                           value={pwForm[f.key]}
                           onChange={e => setPwForm({ ...pwForm, [f.key]: e.target.value })}
                           placeholder={f.placeholder}
-                          className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition"/>
+                          className="w-full px-4 py-2.5 pr-10 border-2 border-white/20 bg-white/10 text-white rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition placeholder-gray-500"/>
                         <EyeBtn k={f.key}/>
                       </div>
                     </div>
@@ -398,9 +390,9 @@ export default function AdminProfile() {
                     {pwLoading ? "Updating..." : "🔐 Update Password"}
                   </button>
                   <div className="text-center pt-1">
-                    <p className="text-xs text-gray-400 mb-1">Don't remember current password?</p>
+                    <p className="text-xs text-gray-500 mb-1">Don't remember current password?</p>
                     <Link to="/forgot-password"
-                      className="text-sm font-bold text-violet-600 hover:underline">
+                      className="text-sm font-bold text-violet-400 hover:underline">
                       Reset via Email →
                     </Link>
                   </div>
@@ -408,17 +400,17 @@ export default function AdminProfile() {
               </div>
             )}
 
-            {/* ✅ Summary cards — only Phone and City (NO Target) */}
+            {/* Summary cards */}
             <div className="grid grid-cols-2 gap-3">
               {[
-                { icon:"📱", label:"Phone", val: user.phone || "Not set", color:"from-blue-50 to-cyan-50",    border:"border-blue-100",   text:"text-blue-700"   },
-                { icon:"🏙️", label:"City",  val: user.city  || "Not set", color:"from-violet-50 to-purple-50",border:"border-violet-100", text:"text-violet-700" },
+                { icon:"📱", label:"Phone", val: user.phone || "Not set", color:"from-blue-500/10 to-cyan-500/10",    border:"border-blue-500/20",   text:"text-blue-400"   },
+                { icon:"🏙️", label:"City",  val: user.city  || "Not set", color:"from-violet-500/10 to-purple-500/10",border:"border-violet-500/20", text:"text-violet-400" },
               ].map(c => (
                 <div key={c.label}
                   className={`bg-gradient-to-br ${c.color} rounded-2xl p-4 border ${c.border} text-center`}>
                   <div className="text-2xl mb-1">{c.icon}</div>
                   <p className={`text-sm font-bold truncate ${c.text}`}>{c.val}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{c.label}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{c.label}</p>
                 </div>
               ))}
             </div>
@@ -427,21 +419,21 @@ export default function AdminProfile() {
         </div>
       </div>
 
-      {/* ─── Delete Account Modal ─── */}
+      {/* Delete Account Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-sm">
             <div className="text-center mb-5">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
                 🗑️
               </div>
-              <h3 className="text-xl font-black text-gray-900">Delete Account</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="text-xl font-black text-white">Delete Account</h3>
+              <p className="text-sm text-gray-400 mt-1">
                 This action is permanent and cannot be undone. All your data will be lost.
               </p>
             </div>
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
-              <p className="text-xs text-red-600 font-semibold text-center">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
+              <p className="text-xs text-red-400 font-semibold text-center">
                 Type <span className="font-black">DELETE</span> to confirm
               </p>
             </div>
@@ -449,11 +441,11 @@ export default function AdminProfile() {
               value={deleteInput}
               onChange={e => setDeleteInput(e.target.value)}
               placeholder='Type "DELETE"'
-              className="w-full px-4 py-3 border-2 border-red-200 rounded-xl text-sm outline-none focus:border-red-400 mb-4 text-center font-bold tracking-widest"/>
+              className="w-full px-4 py-3 border-2 border-red-500/30 bg-white/5 text-white rounded-xl text-sm outline-none focus:border-red-400 mb-4 text-center font-bold tracking-widest placeholder-gray-600"/>
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowDeleteConfirm(false); setDeleteInput(""); }}
-                className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
+                className="flex-1 py-3 border-2 border-white/20 rounded-xl text-sm font-bold text-gray-300 hover:bg-white/10 transition">
                 Cancel
               </button>
               <button

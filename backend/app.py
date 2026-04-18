@@ -1,3 +1,8 @@
+import os
+os.environ["RAZORPAY_KEY_ID"]     = "rzp_test_SdfeTa9dq4DYws"
+os.environ["RAZORPAY_KEY_SECRET"] = "MzDFpEXhGkEIdTPjFWC2zIrx"
+
+
 import logging
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 
@@ -17,6 +22,10 @@ from routes.contact_routes import contact_bp
 from extensions import mail, mongo
 from routes.mock_routes import mock_bp
 from routes.pyq_routes import pyq_bp
+from routes.payment_routes import payment_bp
+from routes.feedback import feedback_bp
+
+
 
 app = Flask(__name__)
 CORS(app)
@@ -51,7 +60,8 @@ app.register_blueprint(contact_bp,       url_prefix="/api")
 app.register_blueprint(mock_bp, url_prefix="/api")
 app.register_blueprint(pyq_bp, url_prefix="/api")
 app.register_blueprint(reports_bp, url_prefix="/api")
-
+app.register_blueprint(payment_bp, url_prefix="/api")
+app.register_blueprint(feedback_bp, url_prefix="/api")
 # ---------------- RUN SERVER ---------------- #
 if __name__ == "__main__":
     app.run(debug=True)

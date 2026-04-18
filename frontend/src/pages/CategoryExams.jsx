@@ -49,7 +49,6 @@ function CategoryExams() {
           slug:   e.slug,
           date:   e.exam_date || e.date || "2026",
           level:  e.level  || "National",
-          rating: e.rating || 4.5,
           status: e.status || "Upcoming",
           category: e.category || categoryName,
         }));

@@ -1,8 +1,14 @@
+# ============================================================
+# reports.py — FIXED VERSION
+# Changes marked with # ✅ FIXED
+# ============================================================
+
 from flask import Blueprint, jsonify, request
 from extensions import mongo
 from datetime import datetime
 
 reports_bp = Blueprint("reports_bp", __name__)
+
 
 # GET all attempts for a specific user
 @reports_bp.route("/reports/user/<user_id>", methods=["GET"])
@@ -34,13 +40,17 @@ def get_all_reports():
 @reports_bp.route("/reports/save", methods=["POST"])
 def save_result():
     try:
-        data            = request.get_json()
+        data = request.get_json()
+
         user_id         = data.get("user_id")
         exam_name       = data.get("exam_name")
         test_no         = data.get("test_no")
         category        = data.get("category", "")
         score           = data.get("score", 0)
-        total_questions = data.get("total_questions", 0)
+        total_questions = data.get("total_questions", 0)   # number of questions (e.g. 30)
+        # ✅ FIXED: total_marks = max possible marks using marking scheme (e.g. 30 * 4 = 120 for AFMC)
+        total_marks     = data.get("total_marks", total_questions)  # fallback to total_questions if not sent
+        marking_scheme  = data.get("marking_scheme", "+1 / 0")     # ✅ FIXED: store scheme label
         answers         = data.get("answers", [])
 
         if not user_id or not exam_name or test_no is None:
@@ -59,7 +69,9 @@ def save_result():
             "test_no":         test_no,
             "category":        category,
             "score":           score,
-            "total_questions": total_questions,
+            "total_questions": total_questions,   # question count
+            "total_marks":     total_marks,       # ✅ FIXED: max marks (score denominator)
+            "marking_scheme":  marking_scheme,    # ✅ FIXED: e.g. "+4 / -1"
             "attempt_no":      attempt_no,
             "answers":         answers,
             "attempted_at":    datetime.utcnow().isoformat()

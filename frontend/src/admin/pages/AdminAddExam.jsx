@@ -9,7 +9,6 @@ const EMPTY_EXAM = {
   level:     "National",
   status:    "Upcoming",
   exam_date: "",
-  rating:    4.5,
   tabs: {
     overview:         "",
     application:      "",
@@ -65,7 +64,6 @@ export default function AdminAddExam() {
   const setTab = (key, value) =>
     setExam((p) => ({ ...p, tabs: { ...p.tabs, [key]: value } }));
 
-  // Exam Pattern
   const setPattern = (field, value) =>
     setExam((p) => ({ ...p, tabs: { ...p.tabs, exam_pattern: { ...p.tabs.exam_pattern, [field]: value } } }));
 
@@ -77,7 +75,6 @@ export default function AdminAddExam() {
   const addSection    = () => setPattern("sections", [...exam.tabs.exam_pattern.sections, { subject: "", questions: "", marks: "", type: "" }]);
   const removeSection = (i) => setPattern("sections", exam.tabs.exam_pattern.sections.filter((_, idx) => idx !== i));
 
-  // Syllabus
   const setSyllabus = (field, value) =>
     setExam((p) => ({ ...p, tabs: { ...p.tabs, syllabus: { ...p.tabs.syllabus, [field]: value } } }));
 
@@ -88,16 +85,13 @@ export default function AdminAddExam() {
   const addTopic      = (si) => { const s = [...exam.tabs.syllabus.subjects]; s[si] = { ...s[si], topics: [...s[si].topics, ""] }; setSyllabus("subjects", s); };
   const removeTopic   = (si, ti) => { const s = [...exam.tabs.syllabus.subjects]; s[si] = { ...s[si], topics: s[si].topics.filter((_, i) => i !== ti) }; setSyllabus("subjects", s); };
 
-  // Tips
   const setTip    = (i, v) => { const t = [...(exam.tabs.preparation_tips || [])]; t[i] = v; setTab("preparation_tips", t); };
   const addTip    = () => setTab("preparation_tips", [...(exam.tabs.preparation_tips || []), ""]);
   const removeTip = (i) => setTab("preparation_tips", (exam.tabs.preparation_tips || []).filter((_, idx) => idx !== i));
 
-  // PYQs
   const setPyqs = (field, value) =>
     setExam((p) => ({ ...p, tabs: { ...p.tabs, pyqs: { ...p.tabs.pyqs, [field]: value } } }));
 
-  // Mock Tests
   const setMock = (field, value) =>
     setExam((p) => ({ ...p, tabs: { ...p.tabs, mock_tests: { ...p.tabs.mock_tests, [field]: value } } }));
 
@@ -107,8 +101,7 @@ export default function AdminAddExam() {
     try {
       await API.post("/exams", {
         name: exam.name, slug: exam.slug, category: exam.category,
-        level: exam.level, status: exam.status, exam_date: exam.exam_date,
-        rating: exam.rating, tabs: exam.tabs,
+        level: exam.level, status: exam.status, exam_date: exam.exam_date, tabs: exam.tabs,
       });
       alert("✅ Exam Published!");
       navigate("/admin/exams");
@@ -165,9 +158,6 @@ export default function AdminAddExam() {
                 <select className={inputCls} value={exam.status} onChange={(e) => setExam({ ...exam, status: e.target.value })}>
                   <option>Upcoming</option><option>Open</option><option>Closed</option>
                 </select></div>
-              <div><label className={labelCls}>Rating (0-5)</label>
-                <input className={inputCls} type="number" min="0" max="5" step="0.1" value={exam.rating}
-                  onChange={(e) => setExam({ ...exam, rating: parseFloat(e.target.value) })} /></div>
             </div>
           </div>
         )}
@@ -317,12 +307,10 @@ export default function AdminAddExam() {
           </div>
         )}
 
-        {/* ✅ PYQs */}
+        {/* PYQs */}
         {activeSection === "pyqs" && (
           <div className="space-y-5">
             <h3 className="font-bold text-gray-700">Previous Year Questions (PYQs)</h3>
-            <p className="text-xs text-gray-400">Ye data PYQs tab mein exactly Image 1 jaise dikhega — Availability, Difficulty Trend, Recommended Sources.</p>
-
             <div>
               <label className={labelCls}>Availability</label>
               <textarea className={areaCls} rows={3}
@@ -330,7 +318,6 @@ export default function AdminAddExam() {
                 value={exam.tabs.pyqs.availability}
                 onChange={(e) => setPyqs("availability", e.target.value)} />
             </div>
-
             <div>
               <label className={labelCls}>Difficulty Trend</label>
               <textarea className={areaCls} rows={3}
@@ -338,7 +325,6 @@ export default function AdminAddExam() {
                 value={exam.tabs.pyqs.difficulty_trend}
                 onChange={(e) => setPyqs("difficulty_trend", e.target.value)} />
             </div>
-
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className={labelCls}>Recommended Sources</label>
@@ -375,12 +361,10 @@ export default function AdminAddExam() {
           </div>
         )}
 
-        {/* ✅ MOCK TESTS */}
+        {/* MOCK TESTS */}
         {activeSection === "mock" && (
           <div className="space-y-5">
             <h3 className="font-bold text-gray-700">Mock Tests</h3>
-            <p className="text-xs text-gray-400">Ye data Mock Tests tab mein exactly Image 2 jaise dikhega.</p>
-
             <div>
               <label className={labelCls}>Why Mock Tests Matter</label>
               <textarea className={areaCls} rows={3}
@@ -388,7 +372,6 @@ export default function AdminAddExam() {
                 value={exam.tabs.mock_tests.importance}
                 onChange={(e) => setMock("importance", e.target.value)} />
             </div>
-
             <div>
               <label className={labelCls}>Recommended Count</label>
               <input className={inputCls}
@@ -396,7 +379,6 @@ export default function AdminAddExam() {
                 value={exam.tabs.mock_tests.recommended_count}
                 onChange={(e) => setMock("recommended_count", e.target.value)} />
             </div>
-
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className={labelCls}>Recommended Platforms</label>

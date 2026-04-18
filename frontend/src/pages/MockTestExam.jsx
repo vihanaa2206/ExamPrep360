@@ -45,7 +45,7 @@ const Q_STATUS = {
   answered:   "bg-green-500 text-white border-green-500",
   flagged:    "bg-purple-500 text-white border-purple-500",
   visited:    "bg-orange-400 text-white border-orange-400",
-  notVisited: "bg-white text-gray-500 border-gray-300",
+  notVisited: "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 border-gray-300 dark:border-gray-600",
 };
 
 const getSaveKey  = (e,t) => `mock_progress_${e}_${t}`;
@@ -59,7 +59,7 @@ export default function MockTestExam() {
   const decodedExam = decodeURIComponent(examName);
   const scheme      = MARKING_SCHEME[decodedExam] || DEFAULT_SCHEME;
 
-  const [phase, setPhase]         = useState("loading"); // loading | resume | instructions | exam | result
+  const [phase, setPhase]         = useState("loading");
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent]     = useState(0);
   const [answers, setAnswers]     = useState({});
@@ -74,7 +74,6 @@ export default function MockTestExam() {
   const [activeSubject, setActiveSubject]         = useState("All");
   const autoSaveRef = useRef(null);
 
-  // Load questions
   useEffect(() => {
     fetch(`${API}/mock/questions/${encodeURIComponent(decodedExam)}/${testNo}`)
       .then(r=>r.json())
@@ -91,7 +90,6 @@ export default function MockTestExam() {
       .catch(()=>setPhase("instructions"));
   },[decodedExam, testNo]);
 
-  // Auto-save
   useEffect(() => {
     if (phase!=="exam") return;
     autoSaveRef.current = setInterval(()=>{
@@ -100,7 +98,6 @@ export default function MockTestExam() {
     return ()=>clearInterval(autoSaveRef.current);
   },[phase, answers, flagged, visited, current, timeLeft]);
 
-  // Overall timer
   useEffect(() => {
     if (phase!=="exam"||timeLeft<=0) return;
     const t = setInterval(()=>{
@@ -109,7 +106,6 @@ export default function MockTestExam() {
     return ()=>clearInterval(t);
   },[phase, timeLeft]);
 
-  // Per-question timer
   useEffect(() => {
     if (phase!=="exam"||!questions[current]) return;
     setQTimer(questions[current].timer_seconds||90);
@@ -168,11 +164,13 @@ export default function MockTestExam() {
     });
     return {score:Math.round(score*100)/100,correct,wrong,skipped};
   },[scheme]);
-const handleSubmit = useCallback(async () => {
+
+  const handleSubmit = useCallback(async () => {
     if (phase === "result") return;
     clearProgress(decodedExam, testNo);
     const { score, correct, wrong, skipped } = calcScore(questions, answers);
-    const maxScore = questions.length * scheme.correct;
+    const total_marks = Math.round(questions.length * scheme.correct * 100) / 100;
+
     const details = questions.map((q, i) => {
       const selected = answers[i];
       let status = "skipped", pts = 0;
@@ -184,28 +182,46 @@ const handleSubmit = useCallback(async () => {
     });
 
     setResult({
-      total: questions.length, correct, wrong, skipped, score, maxScore,
+      total: questions.length, correct, wrong, skipped, score,
+      maxScore: total_marks,
       accuracy: Math.round((correct / questions.length) * 100), details,
     });
 
-    // ✅ LocalStorage history (existing)
     try {
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const raw2 = localStorage.getItem("mock_history");
+      const hist = raw2 ? JSON.parse(raw2) : [];
       hist.unshift({
-      exam: decodedExam, testNo, score, maxScore, correct, wrong, skipped,
-      accuracy: Math.round((correct / questions.length) * 100),
-      total: questions.length, date: new Date().toISOString(), scheme: scheme.label,
-      userId: currentUser._id || currentUser.id || currentUser.email,
+        exam: decodedExam,
+        testNo,
+        score,
+        maxScore: total_marks,
+        total_marks,
+        total_questions: questions.length,
+        correct,
+        wrong,
+        skipped,
+        accuracy: Math.round((correct / questions.length) * 100),
+        total: questions.length,
+        date: new Date().toISOString(),
+        scheme: scheme.label,
+        userId: currentUser._id || currentUser.id || currentUser.email,
+        answers: questions.map((q, i) => ({
+          question_text:   q.question_text,
+          options:         q.options,
+          selected_option: answers[i] || null,
+          correct_option:  q.correct_option,
+          is_correct:      answers[i] === q.correct_option,
+          reason:          q.reason || null,
+          subject:         q.subject || null,
+        })),
       });
       localStorage.setItem("mock_history", JSON.stringify(hist.slice(0, 50)));
     } catch {}
 
-    // ✅ MongoDB mein save karo (NEW)
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       if (user._id) {
-
-        // Category dhundho exam ke liye
         const EXAM_CATEGORY_MAP = {
           "JEE Main": "Engineering", "JEE Advanced": "Engineering",
           "BITSAT": "Engineering", "VITEEE": "Engineering",
@@ -232,7 +248,9 @@ const handleSubmit = useCallback(async () => {
             test_no:         parseInt(testNo),
             category:        EXAM_CATEGORY_MAP[decodedExam] || "Other",
             score:           score,
+            total_marks:     total_marks,
             total_questions: questions.length,
+            marking_scheme:  scheme.label,
             answers: questions.map((q, i) => ({
               question_text:   q.question_text,
               selected_option: answers[i] || null,
@@ -244,7 +262,6 @@ const handleSubmit = useCallback(async () => {
       }
     } catch (err) {
       console.error("Failed to save result to DB:", err);
-      // silently fail — test result still shows
     }
 
     setShowSubmitConfirm(false);
@@ -259,42 +276,42 @@ const handleSubmit = useCallback(async () => {
   const subjects=["All",...new Set(questions.map(q=>q.subject).filter(Boolean))];
   const answered=Object.keys(answers).length;
 
-  // ── LOADING ──────────────────────────────────────────────────────────
+  // ── LOADING ──
   if(phase==="loading") return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"/>
-        <p className="text-gray-500">Loading questions...</p>
+        <p className="text-gray-500 dark:text-gray-400">Loading questions...</p>
       </div>
     </div>
   );
 
-  // ── RESUME PROMPT ────────────────────────────────────────────────────
+  // ── RESUME PROMPT ──
   if(phase==="resume"&&savedProgress) return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
         <BookmarkCheck className="w-14 h-14 text-blue-500 mx-auto mb-4"/>
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Resume Test?</h2>
-        <p className="text-gray-500 text-sm mb-5">
+        <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100 mb-2">Resume Test?</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-5">
           You have a saved attempt for <strong>{decodedExam} — Test {testNo}</strong>
         </p>
-        <div className="bg-blue-50 rounded-xl p-4 mb-6 text-left space-y-2 text-sm">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 text-left space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-500">Saved on:</span>
-            <span className="font-semibold">{new Date(savedProgress.savedAt).toLocaleString("en-IN")}</span>
+            <span className="text-gray-500 dark:text-gray-400">Saved on:</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-200">{new Date(savedProgress.savedAt).toLocaleString("en-IN")}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Answered:</span>
+            <span className="text-gray-500 dark:text-gray-400">Answered:</span>
             <span className="font-semibold text-green-600">{Object.keys(savedProgress.answers||{}).length}/{questions.length}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Time remaining:</span>
+            <span className="text-gray-500 dark:text-gray-400">Time remaining:</span>
             <span className="font-semibold text-blue-600">{fmt(savedProgress.timeLeft||0)}</span>
           </div>
         </div>
         <div className="flex gap-3">
           <button onClick={startFresh}
-            className="flex-1 py-3 border-2 border-gray-200 rounded-xl font-bold text-sm text-gray-600 hover:bg-gray-50">
+            className="flex-1 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
             Start Fresh
           </button>
           <button onClick={resumeTest}
@@ -306,58 +323,55 @@ const handleSubmit = useCallback(async () => {
     </div>
   );
 
-  // ── INSTRUCTIONS PAGE ────────────────────────────────────────────────
+  // ── INSTRUCTIONS PAGE ──
   if(phase==="instructions") return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-950 dark:to-gray-900">
       <div className="max-w-3xl mx-auto px-4 py-10">
 
-        {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold mb-4">
+          <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-4 py-1.5 rounded-full text-sm font-bold mb-4">
             <Info className="w-4 h-4"/> Read Instructions Before Starting
           </div>
-          <h1 className="text-4xl font-black text-gray-900 mb-1">{decodedExam}</h1>
-          <p className="text-gray-500">Mock Test {testNo} · {questions.length} Questions</p>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100 mb-1">{decodedExam}</h1>
+          <p className="text-gray-500 dark:text-gray-400">Mock Test {testNo} · {questions.length} Questions</p>
         </div>
 
-        {/* Test overview */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
             { icon:<BookOpen className="w-5 h-5 text-blue-500"/>, label:"Questions",    value:questions.length },
             { icon:<Clock    className="w-5 h-5 text-orange-500"/>,label:"Time Limit",  value:fmt(questions.length*90) },
             { icon:<Award    className="w-5 h-5 text-green-500"/>, label:"Max Marks",   value:Math.round(questions.length*scheme.correct) },
           ].map(s=>(
-            <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center shadow-sm">
+            <div key={s.label} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 text-center shadow-sm">
               <div className="flex justify-center mb-2">{s.icon}</div>
-              <p className="text-2xl font-black text-gray-900">{s.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+              <p className="text-2xl font-black text-gray-900 dark:text-gray-100">{s.value}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
 
-        {/* Marking scheme */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-5">
-          <h2 className="font-black text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm mb-5">
+          <h2 className="font-black text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Target className="w-5 h-5 text-blue-500"/> Marking Scheme
           </h2>
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 text-center">
               <p className="text-2xl font-black text-green-600">+{scheme.correct}</p>
-              <p className="text-xs text-green-700 font-semibold mt-1">Correct Answer</p>
+              <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-1">Correct Answer</p>
             </div>
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
               <p className="text-2xl font-black text-red-600">{scheme.wrong}</p>
-              <p className="text-xs text-red-700 font-semibold mt-1">Wrong Answer</p>
+              <p className="text-xs text-red-700 dark:text-red-400 font-semibold mt-1">Wrong Answer</p>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
-              <p className="text-2xl font-black text-gray-500">0</p>
-              <p className="text-xs text-gray-600 font-semibold mt-1">Unattempted</p>
+            <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 text-center">
+              <p className="text-2xl font-black text-gray-500 dark:text-gray-300">0</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mt-1">Unattempted</p>
             </div>
           </div>
           {scheme.wrong < 0 && (
-            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
+            <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"/>
-              <p className="text-xs text-amber-800">
+              <p className="text-xs text-amber-800 dark:text-amber-300">
                 <strong>Negative Marking applies!</strong> Wrong answer will deduct {Math.abs(scheme.wrong)} mark(s).
                 Attempt only if you are confident. Leaving a question unanswered is safer than a wrong guess.
               </p>
@@ -365,9 +379,8 @@ const handleSubmit = useCallback(async () => {
           )}
         </div>
 
-        {/* General Instructions */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-5">
-          <h2 className="font-black text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm mb-5">
+          <h2 className="font-black text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Info className="w-5 h-5 text-blue-500"/> General Instructions
           </h2>
           <div className="space-y-2.5">
@@ -382,51 +395,49 @@ const handleSubmit = useCallback(async () => {
               "Your result with detailed answer review will be shown immediately after submission.",
             ].map((ins,i)=>(
               <div key={i} className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5">
                   {i+1}
                 </span>
-                <p className="text-sm text-gray-700">{ins}</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{ins}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Question Palette Legend */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6">
-          <h2 className="font-black text-gray-900 mb-4">Question Status Legend</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm mb-6">
+          <h2 className="font-black text-gray-900 dark:text-gray-100 mb-4">Question Status Legend</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
               ["bg-green-500","Answered","Question has been answered"],
               ["bg-purple-500","Flagged for Review","Marked to revisit later"],
               ["bg-orange-400","Visited (Not Answered)","Opened but not answered"],
-              ["bg-white border border-gray-300","Not Visited","Not yet opened"],
+              ["bg-gray-300 dark:bg-gray-600 border border-gray-300 dark:border-gray-500","Not Visited","Not yet opened"],
             ].map(([color,label,desc])=>(
               <div key={label} className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg ${color} flex-shrink-0`}/>
                 <div>
-                  <p className="text-xs font-bold text-gray-800">{label}</p>
-                  <p className="text-xs text-gray-400">{desc}</p>
+                  <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{label}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Start button */}
         <button onClick={startTest}
           className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl
                      font-black text-lg hover:opacity-90 transition shadow-xl shadow-blue-200
                      flex items-center justify-center gap-3">
           <Play className="w-6 h-6"/> Start Mock Test
         </button>
-        <p className="text-center text-xs text-gray-400 mt-3">
+        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">
           By starting, you agree to attempt the test honestly
         </p>
       </div>
     </div>
   );
 
-  // ── RESULT ───────────────────────────────────────────────────────────
+  // ── RESULT ──
   if(phase==="result"&&result) {
     const gradeBg = result.accuracy>=80?"from-green-500 to-emerald-600"
       :result.accuracy>=60?"from-blue-500 to-indigo-600"
@@ -435,7 +446,7 @@ const handleSubmit = useCallback(async () => {
     const gradeMsg = result.accuracy>=80?"Excellent! 🎉":result.accuracy>=60?"Good Job! 💪":result.accuracy>=40?"Keep Going! 📚":"Need Practice! 🔁";
 
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <div className={`bg-gradient-to-r ${gradeBg} py-12 px-4 text-white text-center`}>
           <Trophy className="w-14 h-14 mx-auto mb-3 opacity-90"/>
           <h1 className="text-4xl font-black mb-1">{gradeMsg}</h1>
@@ -443,28 +454,26 @@ const handleSubmit = useCallback(async () => {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Score cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             {[
-              {label:"Score",    value:`${result.score}/${result.maxScore}`, color:"text-blue-600",   bg:"bg-blue-50"},
-              {label:"Correct",  value:result.correct,                        color:"text-green-600",  bg:"bg-green-50"},
-              {label:"Wrong",    value:result.wrong,                          color:"text-red-600",    bg:"bg-red-50"},
-              {label:"Skipped",  value:result.skipped,                        color:"text-gray-500",   bg:"bg-gray-100"},
-              {label:"Accuracy", value:`${result.accuracy}%`,                 color:"text-purple-600", bg:"bg-purple-50"},
+              {label:"Score",    value:`${result.score}/${result.maxScore}`, color:"text-blue-600",   bg:"bg-blue-50 dark:bg-blue-900/20"},
+              {label:"Correct",  value:result.correct,                        color:"text-green-600",  bg:"bg-green-50 dark:bg-green-900/20"},
+              {label:"Wrong",    value:result.wrong,                          color:"text-red-600",    bg:"bg-red-50 dark:bg-red-900/20"},
+              {label:"Skipped",  value:result.skipped,                        color:"text-gray-500",   bg:"bg-gray-100 dark:bg-gray-800"},
+              {label:"Accuracy", value:`${result.accuracy}%`,                 color:"text-purple-600", bg:"bg-purple-50 dark:bg-purple-900/20"},
             ].map(c=>(
-              <div key={c.label} className={`${c.bg} rounded-2xl p-4 text-center border border-gray-100 shadow-sm`}>
+              <div key={c.label} className={`${c.bg} rounded-2xl p-4 text-center border border-gray-100 dark:border-gray-700 shadow-sm`}>
                 <p className={`text-2xl font-black ${c.color}`}>{c.value}</p>
-                <p className="text-xs text-gray-500 mt-1 font-medium">{c.label}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{c.label}</p>
               </div>
             ))}
           </div>
 
-          {/* Progress bar */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 shadow-sm">
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-6 shadow-sm">
+            <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex">
               <div className="bg-green-500 h-full" style={{width:`${(result.correct/result.total)*100}%`}}/>
               <div className="bg-red-400 h-full"   style={{width:`${(result.wrong/result.total)*100}%`}}/>
-              <div className="bg-gray-300 h-full"  style={{width:`${(result.skipped/result.total)*100}%`}}/>
+              <div className="bg-gray-300 dark:bg-gray-600 h-full"  style={{width:`${(result.skipped/result.total)*100}%`}}/>
             </div>
             <div className="flex justify-between mt-2 text-xs">
               <span className="text-green-600 font-semibold">✓ {result.correct} Correct (+{result.correct*scheme.correct})</span>
@@ -473,15 +482,14 @@ const handleSubmit = useCallback(async () => {
             </div>
           </div>
 
-          {/* Answer Review */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="font-black text-gray-900 text-lg">Detailed Answer Review</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="font-black text-gray-900 dark:text-gray-100 text-lg">Detailed Answer Review</h2>
               <p className="text-xs text-gray-400 mt-0.5">Review answers with explanations</p>
             </div>
-            <div className="divide-y divide-gray-100 max-h-[700px] overflow-y-auto">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[700px] overflow-y-auto">
               {result.details.map((q,i)=>(
-                <div key={i} className={`p-5 ${q.status==="correct"?"bg-green-50":q.status==="wrong"?"bg-red-50":"bg-gray-50"}`}>
+                <div key={i} className={`p-5 ${q.status==="correct"?"bg-green-50 dark:bg-green-900/10":q.status==="wrong"?"bg-red-50 dark:bg-red-900/10":"bg-gray-50 dark:bg-gray-800/50"}`}>
                   <div className="flex items-start gap-3">
                     {q.status==="correct"?<CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"/>
                     :q.status==="wrong"  ?<XCircle     className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"/>
@@ -490,24 +498,23 @@ const handleSubmit = useCallback(async () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-xs font-bold text-gray-400">Q{i+1}</span>
-                        {q.subject&&<span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{q.subject}</span>}
+                        {q.subject&&<span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">{q.subject}</span>}
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full
-                          ${q.status==="correct"?"bg-green-100 text-green-700"
-                          :q.status==="wrong"  ?"bg-red-100 text-red-700"
-                          :"bg-gray-100 text-gray-500"}`}>
+                          ${q.status==="correct"?"bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                          :q.status==="wrong"  ?"bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                          :"bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
                           {q.status==="correct"?`+${scheme.correct}`:q.status==="wrong"?`${scheme.wrong}`:"Skipped"}
                         </span>
                       </div>
 
-                      <p className="text-sm text-gray-900 font-semibold mb-3">{q.question_text}</p>
+                      <p className="text-sm text-gray-900 dark:text-gray-100 font-semibold mb-3">{q.question_text}</p>
 
-                      {/* Options */}
                       <div className="grid gap-1.5 mb-3">
                         {q.options?.map((opt,oi)=>(
                           <div key={oi} className={`text-xs px-3 py-2 rounded-lg border font-medium
-                            ${opt===q.correct_option?"bg-green-100 border-green-300 text-green-800"
-                            :opt===q.selected&&q.status==="wrong"?"bg-red-100 border-red-300 text-red-800"
-                            :"bg-white border-gray-200 text-gray-600"}`}>
+                            ${opt===q.correct_option?"bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-800 dark:text-green-300"
+                            :opt===q.selected&&q.status==="wrong"?"bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-800 dark:text-red-300"
+                            :"bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300"}`}>
                             {opt===q.correct_option&&"✓ "}
                             {opt===q.selected&&q.status==="wrong"&&"✗ "}
                             {opt}
@@ -515,13 +522,12 @@ const handleSubmit = useCallback(async () => {
                         ))}
                       </div>
 
-                      {/* Reason/Explanation */}
                       {q.reason && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3 flex items-start gap-2">
                           <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5"/>
                           <div>
-                            <p className="text-xs font-bold text-blue-700 mb-0.5">Explanation</p>
-                            <p className="text-xs text-blue-800">{q.reason}</p>
+                            <p className="text-xs font-bold text-blue-700 dark:text-blue-400 mb-0.5">Explanation</p>
+                            <p className="text-xs text-blue-800 dark:text-blue-300">{q.reason}</p>
                           </div>
                         </div>
                       )}
@@ -534,7 +540,7 @@ const handleSubmit = useCallback(async () => {
 
           <div className="flex gap-4 mt-6">
             <button onClick={()=>navigate(`/mock-test/${encodeURIComponent(decodedExam)}`)}
-              className="flex-1 py-3 bg-white border border-gray-200 rounded-xl font-bold text-sm text-gray-700 hover:bg-gray-50">
+              className="flex-1 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
               Try Another Test
             </button>
             <button onClick={()=>navigate("/free-tests")}
@@ -547,31 +553,31 @@ const handleSubmit = useCallback(async () => {
     );
   }
 
-  // ── EXAM INTERFACE ───────────────────────────────────────────────────
+  // ── EXAM INTERFACE ──
   if(!questions.length) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">No questions found</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <p className="text-gray-500 dark:text-gray-400">No questions found</p>
     </div>
   );
   const q=questions[current];
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col">
 
       {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <button onClick={()=>setShowQuitConfirm(true)} className="text-gray-500 hover:text-blue-600 p-1">
+            <button onClick={()=>setShowQuitConfirm(true)} className="text-gray-500 dark:text-gray-400 hover:text-blue-600 p-1">
               <ArrowLeft className="w-5 h-5"/>
             </button>
             <div>
-              <h1 className="font-black text-gray-900 text-sm">{decodedExam}</h1>
-              <p className="text-xs text-gray-400">Test {testNo} · {scheme.label}</p>
+              <h1 className="font-black text-gray-900 dark:text-gray-100 text-sm">{decodedExam}</h1>
+              <p className="text-xs text-gray-400 dark:text-gray-500">Test {testNo} · {scheme.label}</p>
             </div>
           </div>
           <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-lg
-            ${timeLeft<300?"bg-red-100 text-red-600 animate-pulse":"bg-blue-50 text-blue-600"}`}>
+            ${timeLeft<300?"bg-red-100 dark:bg-red-900/30 text-red-600 animate-pulse":"bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"}`}>
             <Clock className="w-5 h-5"/>
             {fmt(timeLeft)}
           </div>
@@ -598,40 +604,40 @@ const handleSubmit = useCallback(async () => {
               {subjects.map(s=>(
                 <button key={s} onClick={()=>setActiveSubject(s)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition
-                    ${activeSubject===s?"bg-blue-600 text-white":"bg-white border border-gray-200 text-gray-600"}`}>
+                    ${activeSubject===s?"bg-blue-600 text-white":"bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"}`}>
                   {s}
                 </button>
               ))}
             </div>
           )}
 
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-gray-400 font-semibold">Q{current+1}/{questions.length}</span>
-                {q.subject&&<span className="text-xs bg-blue-100 text-blue-600 px-2.5 py-1 rounded-full font-semibold">{q.subject}</span>}
+                {q.subject&&<span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full font-semibold">{q.subject}</span>}
                 {q.difficulty&&(
                   <span className={`text-xs px-2.5 py-1 rounded-full font-semibold
-                    ${q.difficulty==="High"?"bg-red-100 text-red-600":q.difficulty==="Medium"?"bg-yellow-100 text-yellow-600":"bg-green-100 text-green-600"}`}>
+                    ${q.difficulty==="High"?"bg-red-100 dark:bg-red-900/30 text-red-600":q.difficulty==="Medium"?"bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600":"bg-green-100 dark:bg-green-900/30 text-green-600"}`}>
                     {q.difficulty}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full
-                  ${qTimer<20?"bg-red-100 text-red-600":"bg-gray-100 text-gray-600"}`}>
+                  ${qTimer<20?"bg-red-100 dark:bg-red-900/30 text-red-600":"bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
                   ⏱ {qTimer}s
                 </span>
                 <button onClick={toggleFlag}
                   className={`p-2 rounded-lg transition
-                    ${flagged[current]?"bg-purple-100 text-purple-600":"bg-gray-100 text-gray-500 hover:bg-purple-50"}`}>
+                    ${flagged[current]?"bg-purple-100 dark:bg-purple-900/30 text-purple-600":"bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"}`}>
                   <Flag className="w-4 h-4"/>
                 </button>
               </div>
             </div>
 
             <div className="px-6 py-6">
-              <p className="text-gray-900 font-semibold text-base leading-relaxed mb-6">{q.question_text}</p>
+              <p className="text-gray-900 dark:text-gray-100 font-semibold text-base leading-relaxed mb-6">{q.question_text}</p>
               <div className="space-y-3">
                 {q.options?.map((opt,i)=>{
                   const isSelected=answers[current]===opt;
@@ -640,10 +646,10 @@ const handleSubmit = useCallback(async () => {
                       className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border-2 text-left
                                  transition-all duration-150 font-medium text-sm
                         ${isSelected
-                          ?"border-blue-500 bg-blue-50 text-blue-800"
-                          :"border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50/30"}`}>
+                          ?"border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200"
+                          :"border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-blue-200 dark:hover:border-blue-700 hover:bg-blue-50/30 dark:hover:bg-blue-900/10"}`}>
                       <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0
-                        ${isSelected?"bg-blue-500 text-white":"bg-gray-100 text-gray-600"}`}>
+                        ${isSelected?"bg-blue-500 text-white":"bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
                         {["A","B","C","D"][i]}
                       </span>
                       {opt}
@@ -653,14 +659,14 @@ const handleSubmit = useCallback(async () => {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
               <button onClick={clearAnswer}
                 className="text-xs text-gray-400 hover:text-red-500 transition underline">
                 Clear Response
               </button>
               <div className="flex gap-3">
                 <button onClick={()=>goTo(Math.max(0,current-1))} disabled={current===0}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold disabled:opacity-40">
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold disabled:opacity-40">
                   <ChevronLeft className="w-4 h-4"/> Prev
                 </button>
                 <button onClick={()=>goTo(Math.min(questions.length-1,current+1))} disabled={current===questions.length-1}
@@ -674,13 +680,18 @@ const handleSubmit = useCallback(async () => {
 
         {/* Palette */}
         <div className="hidden lg:block w-60 flex-shrink-0">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm sticky top-24">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900 text-sm">Question Palette</h3>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm sticky top-24">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">Question Palette</h3>
             </div>
-            <div className="px-4 py-3 border-b border-gray-100 space-y-1.5">
-              {[["bg-green-500","Answered"],["bg-orange-400","Visited (Not Answered)"],["bg-purple-500","Flagged"],["bg-white border border-gray-300","Not Visited"]].map(([c,l])=>(
-                <div key={l} className="flex items-center gap-2 text-xs text-gray-600">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 space-y-1.5">
+              {[
+                ["bg-green-500","Answered"],
+                ["bg-orange-400","Visited (Not Answered)"],
+                ["bg-purple-500","Flagged"],
+                ["bg-gray-300 dark:bg-gray-600 border border-gray-300 dark:border-gray-500","Not Visited"]
+              ].map(([c,l])=>(
+                <div key={l} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                   <div className={`w-4 h-4 rounded-sm ${c}`}/>{l}
                 </div>
               ))}
@@ -690,7 +701,7 @@ const handleSubmit = useCallback(async () => {
                 {questions.map((_,i)=>(
                   <button key={i} onClick={()=>goTo(i)}
                     className={`w-9 h-9 rounded-lg text-xs font-bold border transition
-                      ${current===i?"ring-2 ring-blue-500 ring-offset-1":""}
+                      ${current===i?"ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-gray-900":""}
                       ${Q_STATUS[getQStatus(i)]}`}>
                     {i+1}
                   </button>
@@ -698,9 +709,13 @@ const handleSubmit = useCallback(async () => {
               </div>
             </div>
             <div className="px-4 pb-4 space-y-1 text-xs">
-              {[["Answered:",answered,"text-green-600"],["Not Answered:",Object.keys(visited).length-answered,"text-orange-500"],["Not Visited:",questions.length-Object.keys(visited).length,"text-gray-500"]].map(([l,v,c])=>(
+              {[
+                ["Answered:",answered,"text-green-600"],
+                ["Not Answered:",Object.keys(visited).length-answered,"text-orange-500"],
+                ["Not Visited:",questions.length-Object.keys(visited).length,"text-gray-500 dark:text-gray-400"]
+              ].map(([l,v,c])=>(
                 <div key={l} className="flex justify-between">
-                  <span className="text-gray-500">{l}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{l}</span>
                   <span className={`font-bold ${c}`}>{v}</span>
                 </div>
               ))}
@@ -709,29 +724,29 @@ const handleSubmit = useCallback(async () => {
         </div>
       </div>
 
-      {/* Submit Confirm — NO marking scheme here */}
+      {/* Submit Confirm */}
       {showSubmitConfirm&&(
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-sm w-full">
             <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4"/>
-            <h3 className="text-xl font-black text-gray-900 text-center mb-5">Submit Test?</h3>
-            <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-2 text-sm">
+            <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 text-center mb-5">Submit Test?</h3>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-6 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">Answered:</span>
+                <span className="text-gray-500 dark:text-gray-400">Answered:</span>
                 <span className="font-bold text-green-600">{answered}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Unanswered:</span>
+                <span className="text-gray-500 dark:text-gray-400">Unanswered:</span>
                 <span className="font-bold text-red-500">{questions.length-answered}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Flagged:</span>
+                <span className="text-gray-500 dark:text-gray-400">Flagged:</span>
                 <span className="font-bold text-purple-500">{Object.keys(flagged).filter(k=>flagged[k]).length}</span>
               </div>
             </div>
             <div className="flex gap-3">
               <button onClick={()=>setShowSubmitConfirm(false)}
-                className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-sm text-gray-700 hover:bg-gray-50">
+                className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
                 Continue
               </button>
               <button onClick={handleSubmit}
@@ -746,14 +761,14 @@ const handleSubmit = useCallback(async () => {
       {/* Quit Confirm */}
       {showQuitConfirm&&(
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full">
-            <h3 className="text-xl font-black text-gray-900 text-center mb-2">Leave Test?</h3>
-            <p className="text-gray-500 text-sm text-center mb-6">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-sm w-full">
+            <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 text-center mb-2">Leave Test?</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm text-center mb-6">
               Your progress will be <span className="font-semibold text-blue-600">saved automatically</span>. You can resume later.
             </p>
             <div className="flex gap-3">
               <button onClick={()=>setShowQuitConfirm(false)}
-                className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-sm text-gray-700">
+                className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300">
                 Stay
               </button>
               <button onClick={handleQuit}

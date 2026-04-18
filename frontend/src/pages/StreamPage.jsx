@@ -194,13 +194,13 @@ export default function StreamPage() {
                     <td className="px-6 py-3.5 font-semibold text-gray-900">{exam.name}</td>
                     <td className="px-4 py-3.5 text-gray-600">{exam.body}</td>
                     <td className="px-4 py-3.5">
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
+                      <span className="level-badge text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
                         {exam.level}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-gray-600 text-xs">{exam.seats}</td>
                     <td className="px-4 py-3.5">
-                      <span className="text-xs text-blue-600 font-semibold hover:underline">
+                      <span className="view-details-link text-xs text-blue-600 font-semibold hover:underline">
                         View Details →
                       </span>
                     </td>

@@ -13,6 +13,7 @@ import {
 import AskModal from "./AskModal";
 import ShareModal from "./ShareModal";
 import BrowseDropdown from "./BrowseDropdown";
+import ThemeToggle from "./ThemeToggle";
 
 // ── Search suggestions data ───────────────────────────────────────────────
 const SUGGESTIONS = [
@@ -127,7 +128,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
+      <header className="sticky top-0 z-50 shadow-sm" style={{ backgroundColor: 'var(--bg-nav)', borderBottom: '1px solid var(--border-color)' }}>
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
 
@@ -262,7 +263,7 @@ const Header = () => {
                 <Share2 className="w-5 h-5" />
                 <span className="text-xs">Share</span>
               </button>
-
+              <ThemeToggle />
               {/* LOGIN/USER — UNCHANGED */}
               {!user ? (
                 <Link to="/login">

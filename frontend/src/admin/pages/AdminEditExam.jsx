@@ -18,7 +18,6 @@ const SECTIONS = [
   { key: "mock",        label: "Mock Tests" },
 ];
 
-// Convert any value to string safely
 const toStr = (val) => {
   if (!val) return "";
   if (typeof val === "string") return val;
@@ -26,10 +25,8 @@ const toStr = (val) => {
   return String(val);
 };
 
-// Ensure array field
 const toArr = (val) => Array.isArray(val) ? val : [];
 
-// Ensure exam_pattern structure
 const toPattern = (val) => ({
   description:     val?.description     || "",
   duration:        val?.duration        || "",
@@ -41,7 +38,6 @@ const toPattern = (val) => ({
     : [{ subject: "", questions: "", marks: "", type: "" }],
 });
 
-// Ensure syllabus structure
 const toSyllabus = (val) => ({
   pdf_link: val?.pdf_link || "",
   subjects: Array.isArray(val?.subjects) && val.subjects.length > 0
@@ -49,14 +45,12 @@ const toSyllabus = (val) => ({
     : [{ name: "", topics: [""] }],
 });
 
-// Ensure pyqs structure
 const toPyqs = (val) => ({
   availability:        toStr(val?.availability),
   difficulty_trend:    toStr(val?.difficulty_trend),
   recommended_sources: toArr(val?.recommended_sources),
 });
 
-// Ensure mock_tests structure
 const toMock = (val) => ({
   importance:            toStr(val?.importance),
   recommended_count:     toStr(val?.recommended_count),
@@ -95,7 +89,6 @@ export default function AdminEditExam() {
   const setTab = (key, value) =>
     setFormData((p) => ({ ...p, tabs: { ...p.tabs, [key]: value } }));
 
-  // Exam Pattern
   const setPattern = (field, value) =>
     setFormData((p) => ({ ...p, tabs: { ...p.tabs, exam_pattern: { ...p.tabs.exam_pattern, [field]: value } } }));
   const setSection = (i, field, value) => {
@@ -104,7 +97,6 @@ export default function AdminEditExam() {
   const addSection    = () => setPattern("sections", [...formData.tabs.exam_pattern.sections, { subject: "", questions: "", marks: "", type: "" }]);
   const removeSection = (i) => setPattern("sections", formData.tabs.exam_pattern.sections.filter((_, idx) => idx !== i));
 
-  // Syllabus
   const setSyllabus = (field, value) =>
     setFormData((p) => ({ ...p, tabs: { ...p.tabs, syllabus: { ...p.tabs.syllabus, [field]: value } } }));
   const setSubject    = (i, field, value) => { const s = [...formData.tabs.syllabus.subjects]; s[i] = { ...s[i], [field]: value }; setSyllabus("subjects", s); };
@@ -114,16 +106,13 @@ export default function AdminEditExam() {
   const addTopic      = (si) => { const s = [...formData.tabs.syllabus.subjects]; s[si] = { ...s[si], topics: [...s[si].topics, ""] }; setSyllabus("subjects", s); };
   const removeTopic   = (si, ti) => { const s = [...formData.tabs.syllabus.subjects]; s[si] = { ...s[si], topics: s[si].topics.filter((_, i) => i !== ti) }; setSyllabus("subjects", s); };
 
-  // Tips
   const setTip    = (i, v) => { const t = [...(formData.tabs.preparation_tips || [])]; t[i] = v; setTab("preparation_tips", t); };
   const addTip    = () => setTab("preparation_tips", [...(formData.tabs.preparation_tips || []), ""]);
   const removeTip = (i) => setTab("preparation_tips", (formData.tabs.preparation_tips || []).filter((_, idx) => idx !== i));
 
-  // PYQs
   const setPyqs = (field, value) =>
     setFormData((p) => ({ ...p, tabs: { ...p.tabs, pyqs: { ...p.tabs.pyqs, [field]: value } } }));
 
-  // Mock Tests
   const setMock = (field, value) =>
     setFormData((p) => ({ ...p, tabs: { ...p.tabs, mock_tests: { ...p.tabs.mock_tests, [field]: value } } }));
 
@@ -137,7 +126,6 @@ export default function AdminEditExam() {
         level:     formData.level,
         status:    formData.status,
         exam_date: formData.exam_date,
-        rating:    formData.rating,
         tabs:      formData.tabs,
       });
       alert("✅ Updated Successfully!");
@@ -198,13 +186,9 @@ export default function AdminEditExam() {
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
                   <option>Upcoming</option><option>Open</option><option>Closed</option>
                 </select></div>
-              <div><label className={labelCls}>Exam Date</label>
+              <div className="md:col-span-2"><label className={labelCls}>Exam Date</label>
                 <input className={inputCls} placeholder="June 2026" value={formData.exam_date || ""}
                   onChange={(e) => setFormData({ ...formData, exam_date: e.target.value })} /></div>
-              <div><label className={labelCls}>Rating (0-5)</label>
-                <input className={inputCls} type="number" min="0" max="5" step="0.1"
-                  value={formData.rating || 4.5}
-                  onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) })} /></div>
             </div>
           </div>
         )}
@@ -347,7 +331,7 @@ export default function AdminEditExam() {
           </div>
         )}
 
-        {/* ✅ PYQs */}
+        {/* PYQs */}
         {activeSection === "pyqs" && (
           <div className="space-y-5">
             <h3 className="font-bold text-gray-700">Previous Year Questions</h3>
@@ -381,7 +365,7 @@ export default function AdminEditExam() {
           </div>
         )}
 
-        {/* ✅ MOCK TESTS */}
+        {/* MOCK TESTS */}
         {activeSection === "mock" && (
           <div className="space-y-5">
             <h3 className="font-bold text-gray-700">Mock Tests</h3>

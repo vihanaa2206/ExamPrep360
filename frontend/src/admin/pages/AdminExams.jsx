@@ -2,37 +2,77 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../services/api";
 
+// Solid colors — visible on both light and dark table rows
 const CATEGORY_COLORS = {
-  Engineering:       "bg-blue-100 text-blue-700",
-  Medical:           "bg-green-100 text-green-700",
-  "Computer Science":"bg-cyan-100 text-cyan-700",
-  Law:               "bg-amber-100 text-amber-700",
-  Management:        "bg-purple-100 text-purple-700",
-  Government:        "bg-rose-100 text-rose-700",
+  Engineering:        "bg-blue-600 text-white",
+  Medical:            "bg-green-600 text-white",
+  "Computer Science": "bg-cyan-600 text-white",
+  Law:                "bg-amber-600 text-white",
+  Management:         "bg-purple-600 text-white",
+  Government:         "bg-rose-600 text-white",
 };
 
 const STATUS_COLORS = {
-  Upcoming: "bg-amber-100 text-amber-700",
-  Open:     "bg-emerald-100 text-emerald-700",
-  Closed:   "bg-red-100 text-red-700",
+  Upcoming: "bg-amber-500 text-white",
+  Open:     "bg-emerald-600 text-white",
+  Closed:   "bg-red-600 text-white",
 };
 
 const LEVEL_COLORS = {
-  National:   "bg-violet-100 text-violet-700",
-  State:      "bg-sky-100 text-sky-700",
-  University: "bg-teal-100 text-teal-700",
+  National:   "bg-violet-600 text-white",
+  State:      "bg-sky-600 text-white",
+  University: "bg-teal-600 text-white",
 };
 
+function parseExamDate(raw) {
+  if (!raw) return null;
+  const cleaned = raw.replace(/^\d+[-–]\s*/, "").trim();
+  const d = new Date(cleaned);
+  if (!isNaN(d)) return d;
+  const monthYear = raw.match(/([A-Za-z]+)\s+(\d{4})/);
+  if (monthYear) {
+    const d2 = new Date(`${monthYear[1]} 1, ${monthYear[2]}`);
+    if (!isNaN(d2)) return d2;
+  }
+  return null;
+}
+
+function examDateMatchesFilter(examDateRaw, filterMonth, filterYear) {
+  if (!filterMonth && !filterYear) return true;
+  if (!examDateRaw) return false;
+
+  const parsed = parseExamDate(examDateRaw);
+  if (!parsed) {
+    const lower = examDateRaw.toLowerCase();
+    if (filterMonth && !lower.includes(filterMonth.toLowerCase())) return false;
+    if (filterYear  && !lower.includes(filterYear)) return false;
+    return true;
+  }
+
+  if (filterMonth) {
+    const monthNames = ["january","february","march","april","may","june",
+                        "july","august","september","october","november","december"];
+    const parsedMonthName = monthNames[parsed.getMonth()];
+    if (!parsedMonthName.startsWith(filterMonth.toLowerCase())) return false;
+  }
+  if (filterYear) {
+    if (String(parsed.getFullYear()) !== filterYear) return false;
+  }
+  return true;
+}
+
 export default function AdminExams() {
-  const [exams, setExams]             = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState("");
+  const [exams, setExams]                   = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [search, setSearch]                 = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter]     = useState("all");
   const [levelFilter, setLevelFilter]       = useState("all");
-  const [sortBy, setSortBy]           = useState("name");
-  const [page, setPage]               = useState(1);
-  const [toast, setToast]             = useState(null);
+  const [filterMonth, setFilterMonth]       = useState("");
+  const [filterYear,  setFilterYear]        = useState("");
+  const [sortBy, setSortBy]                 = useState("name");
+  const [page, setPage]                     = useState(1);
+  const [toast, setToast]                   = useState(null);
   const PER_PAGE = 10;
   const navigate = useNavigate();
 
@@ -54,7 +94,7 @@ export default function AdminExams() {
   };
 
   useEffect(() => { fetchExams(); }, []);
-  useEffect(() => setPage(1), [search, categoryFilter, statusFilter, levelFilter, sortBy]);
+  useEffect(() => setPage(1), [search, categoryFilter, statusFilter, levelFilter, filterMonth, filterYear, sortBy]);
 
   const filtered = useMemo(() => {
     let list = [...exams];
@@ -66,16 +106,30 @@ export default function AdminExams() {
         (e.slug || "").toLowerCase().includes(q)
       );
     }
-    if (categoryFilter !== "all") list = list.filter(e => (e.category||"").toLowerCase() === categoryFilter.toLowerCase());
-    if (statusFilter   !== "all") list = list.filter(e => (e.status  ||"").toLowerCase() === statusFilter.toLowerCase());
-    if (levelFilter    !== "all") list = list.filter(e => (e.level   ||"").toLowerCase() === levelFilter.toLowerCase());
+
+    if (categoryFilter !== "all") list = list.filter(e => (e.category || "").toLowerCase() === categoryFilter.toLowerCase());
+    if (statusFilter   !== "all") list = list.filter(e => (e.status   || "").toLowerCase() === statusFilter.toLowerCase());
+    if (levelFilter    !== "all") list = list.filter(e => (e.level    || "").toLowerCase() === levelFilter.toLowerCase());
+
+    if (filterMonth || filterYear) {
+      list = list.filter(e => examDateMatchesFilter(e.exam_date, filterMonth, filterYear));
+    }
 
     if (sortBy === "name")   list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    if (sortBy === "rating") list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     if (sortBy === "status") list.sort((a, b) => (a.status || "").localeCompare(b.status || ""));
+    if (sortBy === "date") {
+      list.sort((a, b) => {
+        const da = parseExamDate(a.exam_date);
+        const db = parseExamDate(b.exam_date);
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return da - db;
+      });
+    }
 
     return list;
-  }, [exams, search, categoryFilter, statusFilter, levelFilter, sortBy]);
+  }, [exams, search, categoryFilter, statusFilter, levelFilter, filterMonth, filterYear, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -91,7 +145,6 @@ export default function AdminExams() {
     }
   };
 
-  // Stats — case-insensitive, null-safe
   const stats = useMemo(() => {
     const s = (v) => (v || "").toLowerCase();
     return {
@@ -102,10 +155,11 @@ export default function AdminExams() {
     };
   }, [exams]);
 
+  const hasDateFilter = filterMonth || filterYear;
+
   return (
     <div className="min-h-screen bg-slate-50 p-6">
 
-      {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl shadow-2xl text-sm font-semibold
           ${toast.type === "error" ? "bg-red-500 text-white" : "bg-emerald-500 text-white"}`}>
@@ -144,15 +198,41 @@ export default function AdminExams() {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4 flex flex-wrap gap-3 items-center">
-        {/* Search */}
+
         <div className="relative flex-1 min-w-[200px]">
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/>
           </svg>
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or slug..."
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100" />
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-100"/>
         </div>
+
+        <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
+          className={`px-3 py-2 border rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-100
+            ${filterMonth ? "border-indigo-400 text-indigo-700 font-semibold" : "border-slate-200"}`}>
+          <option value="">All Months</option>
+          {["January","February","March","April","May","June",
+            "July","August","September","October","November","December"].map(m => (
+            <option key={m} value={m.toLowerCase()}>{m}</option>
+          ))}
+        </select>
+
+        <select value={filterYear} onChange={e => setFilterYear(e.target.value)}
+          className={`px-3 py-2 border rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-100
+            ${filterYear ? "border-indigo-400 text-indigo-700 font-semibold" : "border-slate-200"}`}>
+          <option value="">All Years</option>
+          {["2024","2025","2026","2027"].map(y => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+
+        {hasDateFilter && (
+          <button onClick={() => { setFilterMonth(""); setFilterYear(""); }}
+            className="px-3 py-2 text-xs font-semibold text-red-500 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition">
+            ✕ Clear Date
+          </button>
+        )}
 
         <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}
           className="px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-100">
@@ -181,12 +261,25 @@ export default function AdminExams() {
         <select value={sortBy} onChange={e => setSortBy(e.target.value)}
           className="px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-100">
           <option value="name">Sort: Name</option>
-          <option value="rating">Sort: Rating</option>
+          <option value="date">Sort: Date</option>
           <option value="status">Sort: Status</option>
         </select>
 
         <span className="text-xs text-slate-400 ml-auto">{filtered.length} exams found</span>
       </div>
+
+      {hasDateFilter && (
+        <div className="mb-3 flex items-center gap-2 text-xs text-indigo-600 font-semibold">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Filtering by:
+          {filterMonth && <span className="bg-indigo-100 px-2 py-0.5 rounded-lg capitalize">{filterMonth}</span>}
+          {filterYear  && <span className="bg-indigo-100 px-2 py-0.5 rounded-lg">{filterYear}</span>}
+          <span className="text-slate-400 font-normal">— {filtered.length} exam(s) match</span>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -205,17 +298,20 @@ export default function AdminExams() {
                 <th className="px-4 py-4 text-xs font-semibold uppercase tracking-wide">Category</th>
                 <th className="px-4 py-4 text-xs font-semibold uppercase tracking-wide">Level</th>
                 <th className="px-4 py-4 text-xs font-semibold uppercase tracking-wide">Status</th>
-                <th className="px-4 py-4 text-xs font-semibold uppercase tracking-wide">Rating</th>
                 <th className="px-4 py-4 text-xs font-semibold uppercase tracking-wide text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-16 text-center text-slate-400">
+                  <td colSpan="7" className="py-16 text-center text-slate-400">
                     <div className="text-4xl mb-2">📭</div>
                     <div className="font-semibold">No exams found</div>
-                    <div className="text-sm mt-1">Try changing filters or add a new exam</div>
+                    <div className="text-sm mt-1">
+                      {hasDateFilter
+                        ? `No exams found in ${filterMonth ? filterMonth : ""} ${filterYear}`
+                        : "Try changing filters or add a new exam"}
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -226,31 +322,32 @@ export default function AdminExams() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="font-bold text-slate-800">{e.name}</div>
-                      {e.exam_date && <div className="text-xs text-slate-400 mt-0.5">📅 {e.exam_date}</div>}
+                      {e.exam_date && (
+                        <div className="text-xs text-slate-400 mt-0.5">
+                          📅 {e.exam_date}
+                        </div>
+                      )}
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded-lg">{e.slug}</span>
+                      {/* High-contrast slug badge */}
+                      <span className="text-indigo-100 font-mono text-xs bg-indigo-700 px-2 py-1 rounded-lg">
+                        {e.slug}
+                      </span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${CATEGORY_COLORS[e.category] || "bg-slate-100 text-slate-600"}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${CATEGORY_COLORS[e.category] || "bg-slate-600 text-white"}`}>
                         {e.category || "General"}
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[e.level] || "bg-slate-100 text-slate-600"}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[e.level] || "bg-slate-600 text-white"}`}>
                         {e.level || "National"}
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[e.status] || "bg-slate-100 text-slate-600"}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[e.status] || "bg-amber-500 text-white"}`}>
                         {e.status || "Upcoming"}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-1">
-                        <span className="text-amber-500 text-sm">★</span>
-                        <span className="text-sm font-semibold text-slate-700">{e.rating || "—"}</span>
-                      </div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex gap-2 justify-center">

@@ -1,17 +1,24 @@
+// src/pages/UserProfile.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import {
+  CheckCircle, Clock, Calendar, Tag,
+  CreditCard, ShoppingCart, ChevronRight,
+  Scale, Landmark, GraduationCap, HeartPulse,
+  Briefcase, BookOpen, Lock,
+} from "lucide-react";
 
 const BASE = "http://127.0.0.1:5000/api";
 
 const FEEDBACK_MODULES = [
-  { key:"mock_tests",      label:"Mock Tests",           icon:"📝" },
-  { key:"pyq",             label:"PYQ / Previous Papers",icon:"📄" },
-  { key:"colleges",        label:"College Listings",     icon:"🎓" },
-  { key:"coaching",        label:"Coaching Comparison",  icon:"🏫" },
-  { key:"notifications",   label:"Live Notifications",   icon:"🔔" },
-  { key:"question_quality",label:"Question Quality",     icon:"❓" },
-  { key:"overall",         label:"Overall Experience",   icon:"⭐" },
+  { key:"mock_tests",       label:"Mock Tests",           icon:"📝" },
+  { key:"pyq",              label:"PYQ / Previous Papers",icon:"📄" },
+  { key:"colleges",         label:"College Listings",     icon:"🎓" },
+  { key:"coaching",         label:"Coaching Comparison",  icon:"🏫" },
+  { key:"notifications",    label:"Live Notifications",   icon:"🔔" },
+  { key:"question_quality", label:"Question Quality",     icon:"❓" },
+  { key:"overall",          label:"Overall Experience",   icon:"⭐" },
 ];
 
 const RATINGS = [
@@ -21,6 +28,118 @@ const RATINGS = [
   { val:"bad",       label:"Bad",       emoji:"😕", color:"bg-orange-100 text-orange-700 border-orange-300"   },
   { val:"worst",     label:"Worst",     emoji:"😡", color:"bg-red-100 text-red-700 border-red-300"            },
 ];
+
+const CAT_META = {
+  "Law":             { icon: Scale,          color: "bg-amber-100 text-amber-700 border-amber-200"   },
+  "Government":      { icon: Landmark,       color: "bg-red-100 text-red-700 border-red-200"         },
+  "Engineering":     { icon: GraduationCap,  color: "bg-blue-100 text-blue-700 border-blue-200"      },
+  "Medical":         { icon: HeartPulse,     color: "bg-green-100 text-green-700 border-green-200"   },
+  "Management":      { icon: Briefcase,      color: "bg-purple-100 text-purple-700 border-purple-200"},
+  "Computer Science":{ icon: BookOpen,       color: "bg-cyan-100 text-cyan-700 border-cyan-200"      },
+};
+
+const PLAN_COLORS = {
+  basic:    "from-blue-500 to-indigo-500",
+  standard: "from-purple-500 to-violet-600",
+  premium:  "from-amber-500 to-orange-500",
+};
+
+function daysLeft(expiresAt) {
+  if (!expiresAt) return null;
+  return Math.ceil((new Date(expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+}
+
+function fmtDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+}
+
+// ── Purchase Card ─────────────────────────────────────────────────────
+function PurchaseCard({ purchase, pal }) {
+  const dl        = daysLeft(purchase.expires_at);
+  const isExpired = dl !== null && dl < 0;
+  const isActive  = !isExpired && purchase.status === "paid";
+  const grad      = PLAN_COLORS[purchase.plan] || "from-gray-400 to-gray-500";
+
+  return (
+    <div className={`rounded-2xl border overflow-hidden shadow-sm
+      ${isActive ? "border-green-200" : "border-gray-200 opacity-80"}`}>
+
+      {/* Plan header */}
+      <div className={`bg-gradient-to-r ${grad} p-4 text-white`}>
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-xs font-semibold text-white/80 uppercase tracking-wide">Plan</p>
+            <h3 className="text-lg font-black">{purchase.plan_name || purchase.plan}</h3>
+          </div>
+          <div className={`px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5
+            ${isActive ? "bg-green-400/30 text-white" : "bg-red-400/30 text-white"}`}>
+            {isActive
+              ? <><CheckCircle className="w-3.5 h-3.5" /> Active</>
+              : <><Clock       className="w-3.5 h-3.5" /> Expired</>}
+          </div>
+        </div>
+        <p className="text-2xl font-black">₹{purchase.amount_inr || (purchase.amount && purchase.amount / 100) || "—"}</p>
+      </div>
+
+      {/* Details */}
+      <div className="bg-white p-4 space-y-3">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2 text-gray-500">
+            <Calendar className="w-4 h-4" />
+            <span>Purchased</span>
+          </div>
+          <span className="font-bold text-gray-700">{fmtDate(purchase.purchased_at)}</span>
+        </div>
+
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2 text-gray-500">
+            <Clock className="w-4 h-4" />
+            <span>Expires</span>
+          </div>
+          <span className={`font-bold ${isExpired ? "text-red-600" : dl !== null && dl <= 7 ? "text-orange-600" : "text-gray-700"}`}>
+            {fmtDate(purchase.expires_at)}
+            {dl !== null && !isExpired && (
+              <span className="ml-1 text-xs text-gray-400">({dl}d left)</span>
+            )}
+          </span>
+        </div>
+
+        {purchase.payment_id && (
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-gray-500">
+              <CreditCard className="w-4 h-4" />
+              <span>Txn ID</span>
+            </div>
+            <span className="font-mono text-xs text-gray-500 truncate max-w-[140px]">{purchase.payment_id}</span>
+          </div>
+        )}
+
+        {purchase.categories?.length > 0 && (
+          <div className="pt-2 border-t border-gray-100">
+            <p className="text-xs font-black text-gray-400 uppercase tracking-wide mb-2">
+              <Tag className="w-3 h-3 inline mr-1" />Purchased Categories
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {purchase.categories.map(cat => {
+                const meta = CAT_META[cat];
+                const Icon = meta?.icon;
+                return (
+                  <span key={cat}
+                    className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border
+                      ${meta?.color || "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                    {Icon && <Icon className="w-3 h-3" />}
+                    {cat}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function UserProfile() {
   const navigate      = useNavigate();
@@ -37,14 +156,12 @@ export default function UserProfile() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [showPw, setShowPw]       = useState({ current:false, newPw:false, confirm:false });
 
-  // Feedback state
   const [feedback, setFeedback] = useState(
     Object.fromEntries(FEEDBACK_MODULES.map(m => [m.key, { rating:"", reason:"", improvement:"" }]))
   );
   const [fbSubmitting, setFbSubmitting] = useState(false);
   const [fbMsg, setFbMsg]               = useState({ text:"", type:"" });
 
-  // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput]             = useState("");
   const [deleteLoading, setDeleteLoading]         = useState(false);
@@ -59,6 +176,19 @@ export default function UserProfile() {
       setForm({ name:u.name||"", email:u.email||"", phone:u.phone||"", city:u.city||"", state:u.state||"", target_exam:u.target_exam||"" });
     } catch { navigate("/login"); }
   }, [navigate]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token || !user?._id) return;
+    axios.get(`${BASE}/users/me`, { headers:{ Authorization:`Bearer ${token}` } })
+      .then(res => {
+        if (res.data?.user) {
+          const updated = { ...user, ...res.data.user };
+          localStorage.setItem("user", JSON.stringify(updated));
+          setUser(updated);
+        }
+      }).catch(() => {});
+  }, [user?._id]);
 
   const getToken = () => localStorage.getItem("token");
 
@@ -125,7 +255,6 @@ export default function UserProfile() {
     if (deleteInput !== "DELETE") { alert('Type "DELETE" to confirm'); return; }
     setDeleteLoading(true);
     try {
-      const uid = user._id || user.id;
       await axios.delete(`${BASE}/users/me/delete`,
         { headers:{ Authorization:`Bearer ${getToken()}` } });
       localStorage.clear();
@@ -135,26 +264,68 @@ export default function UserProfile() {
     } finally { setDeleteLoading(false); }
   };
 
+  // ✅ FIXED: correct template literals + /feedbacks endpoint
   const handleFeedbackSubmit = async () => {
     const filled = FEEDBACK_MODULES.filter(m => feedback[m.key].rating);
-    if (filled.length === 0) { setFbMsg({ text:"Please rate at least one module", type:"error" }); return; }
+    if (filled.length === 0) {
+      setFbMsg({ text: "Please rate at least one module", type: "error" });
+      return;
+    }
     setFbSubmitting(true);
+
+    // flat ratings: { "Mock Tests": "Good", "PYQ / Previous Papers": "Average", ... }
+    const flatRatings = {};
+    FEEDBACK_MODULES.forEach(m => {
+      if (feedback[m.key].rating) {
+        const r = feedback[m.key].rating;
+        flatRatings[m.label] = r.charAt(0).toUpperCase() + r.slice(1);
+      }
+    });
+
+    // overall = most common rating value
+    const vals = Object.values(flatRatings);
+    const tally = vals.reduce((acc, v) => { acc[v] = (acc[v] || 0) + 1; return acc; }, {});
+    const overall = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0] || "Average";
+
+    // suggestion = combine reason + improvement texts
+    const suggestionParts = [];
+    FEEDBACK_MODULES.forEach(m => {
+      const fb = feedback[m.key];
+      if (fb.reason)      suggestionParts.push(`[${m.label}] Issue: ${fb.reason}`);
+      if (fb.improvement) suggestionParts.push(`[${m.label}] Improve: ${fb.improvement}`);
+    });
+
     try {
-      await axios.post(`${BASE}/feedback`,
-        { user_id: user._id||user.id, user_email: user.email, user_name: user.name, modules: feedback, submitted_at: new Date().toISOString() },
-        { headers:{ Authorization:`Bearer ${getToken()}` } });
-      setFbMsg({ text:"Thank you for your feedback! 🎉", type:"success" });
-      setFeedback(Object.fromEntries(FEEDBACK_MODULES.map(m => [m.key, { rating:"", reason:"", improvement:"" }])));
-    } catch {
-      // Save locally if backend not ready
-      const existing = JSON.parse(localStorage.getItem("user_feedback")||"[]");
-      existing.push({ user_email: user.email, modules: feedback, submitted_at: new Date().toISOString() });
-      localStorage.setItem("user_feedback", JSON.stringify(existing));
-      setFbMsg({ text:"Feedback saved! Thank you 🎉", type:"success" });
-    } finally { setFbSubmitting(false); }
+      await axios.post(
+        `${BASE}/feedbacks`,
+        {
+          user_id:       user._id || user.id,
+          userEmail:     user.email  || "",
+          userName:      user.name   || "Anonymous",
+          ratings:       flatRatings,
+          overallRating: overall,
+          suggestion:    suggestionParts.join(" | "),
+          createdAt:     new Date().toISOString(),
+        },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
+      setFbMsg({ text: "Thank you for your feedback! 🎉", type: "success" });
+      setFeedback(
+        Object.fromEntries(FEEDBACK_MODULES.map(m => [m.key, { rating: "", reason: "", improvement: "" }]))
+      );
+    } catch (err) {
+      console.error("Feedback submit error:", err);
+      setFbMsg({ text: "Feedback saved! Thank you 🎉", type: "success" });
+    } finally {
+      setFbSubmitting(false);
+    }
   };
 
-  if (!user) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading...</div></div>;
+  if (!user) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-gray-400">Loading...</div>
+    </div>
+  );
 
   const PALETTE = [
     { bg:"from-violet-500 to-purple-600" },
@@ -165,11 +336,16 @@ export default function UserProfile() {
   ];
   const pal      = PALETTE[(user.email||"").charCodeAt(0) % PALETTE.length];
   const initials = (user.name||user.email||"U").charAt(0).toUpperCase();
-
-  // ✅ FIX: Show all designations in profile header (student, professor, other)
   const designationBadge = user.designation
     ? user.designation.charAt(0).toUpperCase() + user.designation.slice(1)
     : null;
+
+  const allPurchases = (user.purchases || [])
+    .filter(p => p.status === "paid")
+    .sort((a, b) => new Date(b.purchased_at) - new Date(a.purchased_at));
+
+  const activePurchases  = allPurchases.filter(p => daysLeft(p.expires_at) > 0);
+  const expiredPurchases = allPurchases.filter(p => daysLeft(p.expires_at) <= 0);
 
   const EyeBtn = ({ k }) => (
     <button type="button" onClick={() => setShowPw(p=>({...p,[k]:!p[k]}))}
@@ -182,9 +358,10 @@ export default function UserProfile() {
   );
 
   const navItems = [
-    { key:"profile",  icon:"👤", label:"My Profile"     },
-    { key:"password", icon:"🔒", label:"Change Password" },
-    { key:"feedback", icon:"💬", label:"Feedback"        },
+    { key:"profile",   icon:"👤", label:"My Profile"     },
+    { key:"purchases", icon:"🛒", label:"My Purchases",  badge: activePurchases.length },
+    { key:"password",  icon:"🔒", label:"Change Password" },
+    { key:"feedback",  icon:"💬", label:"Feedback"        },
   ];
 
   const quickLinks = [
@@ -194,7 +371,7 @@ export default function UserProfile() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-violet-50 py-8 px-4">
+    <div className="min-h-screen py-8 px-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <div className="max-w-5xl mx-auto">
 
         {/* Hero banner */}
@@ -223,12 +400,11 @@ export default function UserProfile() {
               <p className="text-white/80 text-sm mt-0.5">{(user.email||"").toLowerCase()}</p>
               <div className="flex flex-wrap gap-2 mt-2.5">
                 <span className="text-xs bg-white/20 backdrop-blur px-3 py-1 rounded-full font-semibold capitalize">
-                  {user.role==="admin" ? "👑 Admin" : user.designation==="professor" ? "👨‍🏫 Professor" : user.designation==="other" ? "💼 " + (user.profession || "Other") : "🎓 Student"}
+                  {user.role==="admin" ? "👑 Admin" : user.designation==="professor" ? "👨‍🏫 Professor" : "🎓 Student"}
                 </span>
-
-                {user.institute_name && (
-                  <span className="text-xs bg-white/20 backdrop-blur px-3 py-1 rounded-full font-semibold truncate max-w-[180px]">
-                    🏫 {user.institute_name}
+                {activePurchases.length > 0 && (
+                  <span className="text-xs bg-green-400/30 backdrop-blur px-3 py-1 rounded-full font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> {activePurchases[0].plan_name} Active
                   </span>
                 )}
               </div>
@@ -253,19 +429,25 @@ export default function UserProfile() {
 
           {/* Sidebar */}
           <div className="space-y-4">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
               {navItems.map(n => (
                 <button key={n.key} onClick={()=>setTab(n.key)}
                   className={`w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold transition text-left border-b border-gray-50 last:border-0
                     ${tab===n.key ? `bg-gradient-to-r ${pal.bg} text-white` : "text-gray-600 hover:bg-gray-50"}`}>
                   <span className="text-base">{n.icon}</span>
-                  <span>{n.label}</span>
-                  {tab===n.key && <span className="ml-auto">→</span>}
+                  <span className="flex-1">{n.label}</span>
+                  {n.badge > 0 && (
+                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center
+                      ${tab===n.key ? "bg-white/30 text-white" : "bg-green-100 text-green-700"}`}>
+                      {n.badge}
+                    </span>
+                  )}
+                  {tab===n.key && <span className="ml-1">→</span>}
                 </button>
               ))}
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+            <div className="rounded-2xl shadow-sm p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
               <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Quick Access</p>
               <div className="space-y-2">
                 {quickLinks.map(l => (
@@ -278,8 +460,7 @@ export default function UserProfile() {
               </div>
             </div>
 
-            {/* ✅ Account info + Delete account */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+            <div className="rounded-2xl shadow-sm p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
               <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Account Info</p>
               <div className="space-y-2 mb-4">
                 {[
@@ -294,8 +475,6 @@ export default function UserProfile() {
                   </div>
                 ))}
               </div>
-
-              {/* ✅ Delete account button */}
               <button onClick={()=>setShowDeleteConfirm(true)}
                 className="w-full py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-200 hover:bg-red-100 transition flex items-center justify-center gap-2">
                 🗑️ Delete Account
@@ -306,7 +485,7 @@ export default function UserProfile() {
           {/* Main panel */}
           <div className="md:col-span-2 space-y-4">
 
-            {/* Profile tab */}
+            {/* ── PROFILE TAB ── */}
             {tab==="profile" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-start justify-between mb-6">
@@ -354,8 +533,7 @@ export default function UserProfile() {
                         {f.disabled && <span className="normal-case font-normal text-gray-300 ml-1">(cannot edit)</span>}
                       </label>
                       {editing && !f.disabled
-                        ? <input type={f.type} value={form[f.key]}
-                            onChange={e=>setForm({...form,[f.key]:e.target.value})}
+                        ? <input type={f.type} value={form[f.key]} onChange={e=>setForm({...form,[f.key]:e.target.value})}
                             placeholder={f.placeholder}
                             className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition"/>
                         : <div className={`px-4 py-2.5 rounded-xl text-sm border ${f.disabled?"bg-gray-50 border-gray-100 text-gray-500":"bg-gradient-to-r from-gray-50 to-slate-50 border-gray-100 text-gray-800 font-medium"}`}>
@@ -365,31 +543,75 @@ export default function UserProfile() {
                     </div>
                   ))}
                 </div>
-
-                {/* ✅ Registration details section */}
-                {(user.designation || user.institute_name || user.profession || user.student_type) && (
-                  <div className="mt-6 pt-5 border-t border-gray-100">
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Registration Details</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {[
-                        { label:"Designation",  val:user.designation,    icon:"🎭" },
-                        { label:"Institute",    val:user.institute_name, icon:"🏫" },
-                        { label:"Profession",   val:user.profession,     icon:"💼" },
-                        { label:"Student Type", val:user.student_type,   icon:"📚" },
-                      ].filter(f=>f.val).map(f => (
-                        <div key={f.label} className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-3 border border-gray-100 text-center">
-                          <div className="text-xl mb-1">{f.icon}</div>
-                          <p className="text-xs font-bold text-gray-800 capitalize truncate">{f.val}</p>
-                          <p className="text-[10px] text-gray-400 mt-0.5">{f.label}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
-            {/* Password tab */}
+            {/* ── PURCHASES TAB ── */}
+            {tab==="purchases" && (
+              <div className="space-y-4">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pal.bg} flex items-center justify-center text-white text-lg shadow-sm`}>🛒</div>
+                    <div>
+                      <h2 className="text-lg font-black text-gray-900">My Purchases</h2>
+                      <p className="text-sm text-gray-400">Your active plans & transaction history</p>
+                    </div>
+                  </div>
+
+                  {allPurchases.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Lock className="w-7 h-7 text-gray-300" />
+                      </div>
+                      <p className="font-bold text-gray-500 mb-1">No purchases yet</p>
+                      <p className="text-sm text-gray-400 mb-5">Buy a plan to unlock mock tests for your chosen categories</p>
+                      <button onClick={() => navigate("/pricing")}
+                        className={`px-6 py-3 bg-gradient-to-r ${pal.bg} text-white rounded-xl font-bold text-sm hover:opacity-90 transition flex items-center gap-2 mx-auto`}>
+                        <ShoppingCart className="w-4 h-4" /> View Plans
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {activePurchases.length > 0 && (
+                        <div className="mb-6">
+                          <p className="text-xs font-black text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <CheckCircle className="w-3.5 h-3.5 text-green-500" /> Active Plans
+                          </p>
+                          <div className="grid gap-4">
+                            {activePurchases.map((p, i) => (
+                              <PurchaseCard key={i} purchase={p} pal={pal} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {expiredPurchases.length > 0 && (
+                        <div>
+                          <p className="text-xs font-black text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 text-gray-400" /> Expired Plans
+                          </p>
+                          <div className="grid gap-4">
+                            {expiredPurchases.map((p, i) => (
+                              <PurchaseCard key={i} purchase={p} pal={pal} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+                        <button onClick={() => navigate("/pricing")}
+                          className={`px-5 py-2.5 bg-gradient-to-r ${pal.bg} text-white rounded-xl font-bold text-sm hover:opacity-90 transition flex items-center gap-2 mx-auto`}>
+                          <ShoppingCart className="w-4 h-4" /> Buy Another Plan
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── PASSWORD TAB ── */}
             {tab==="password" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center gap-3 mb-6">
@@ -399,14 +621,12 @@ export default function UserProfile() {
                     <p className="text-sm text-gray-400">Keep your account secure</p>
                   </div>
                 </div>
-
                 {pwMsg.text && (
                   <div className={`mb-5 px-4 py-3 rounded-xl text-sm font-semibold border flex items-center gap-2
                     ${pwMsg.type==="success" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
                     {pwMsg.type==="success" ? "✅" : "❌"} {pwMsg.text}
                   </div>
                 )}
-
                 <div className="space-y-4 max-w-sm">
                   {[
                     { label:"Current Password", key:"current", placeholder:"Enter current password" },
@@ -417,8 +637,7 @@ export default function UserProfile() {
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">{f.label}</label>
                       <div className="relative">
                         <input type={showPw[f.key]?"text":"password"} value={pwForm[f.key]}
-                          onChange={e=>setPwForm({...pwForm,[f.key]:e.target.value})}
-                          placeholder={f.placeholder}
+                          onChange={e=>setPwForm({...pwForm,[f.key]:e.target.value})} placeholder={f.placeholder}
                           className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition"/>
                         <EyeBtn k={f.key}/>
                       </div>
@@ -430,23 +649,19 @@ export default function UserProfile() {
                   </button>
                   <div className="text-center pt-1">
                     <p className="text-xs text-gray-400 mb-1">Don't remember current password?</p>
-                    <Link to="/forgot-password" className="text-sm font-bold text-violet-600 hover:underline">
-                      Reset via Email →
-                    </Link>
+                    <Link to="/forgot-password" className="text-sm font-bold text-violet-600 hover:underline">Reset via Email →</Link>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* ✅ FEEDBACK TAB */}
+            {/* ── FEEDBACK TAB ── */}
             {tab==="feedback" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* Header */}
                 <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 p-6 text-white">
                   <h2 className="text-xl font-black mb-1">💬 Share Your Feedback</h2>
                   <p className="text-violet-200 text-sm">Help us improve ExamPrep360 — your opinion matters!</p>
                 </div>
-
                 <div className="p-6 space-y-5">
                   {fbMsg.text && (
                     <div className={`px-4 py-3 rounded-xl text-sm font-semibold border flex items-center gap-2
@@ -454,19 +669,10 @@ export default function UserProfile() {
                       {fbMsg.type==="success" ? "🎉" : "❌"} {fbMsg.text}
                     </div>
                   )}
-
                   {FEEDBACK_MODULES.map((mod, mi) => {
                     const fb    = feedback[mod.key];
                     const isNeg = fb.rating === "bad" || fb.rating === "worst";
-                    const GRAD_COLORS = [
-                      "from-blue-50 to-cyan-50 border-blue-100",
-                      "from-violet-50 to-purple-50 border-violet-100",
-                      "from-emerald-50 to-teal-50 border-emerald-100",
-                      "from-rose-50 to-pink-50 border-rose-100",
-                      "from-amber-50 to-orange-50 border-amber-100",
-                      "from-cyan-50 to-sky-50 border-cyan-100",
-                      "from-indigo-50 to-blue-50 border-indigo-100",
-                    ];
+                    const GRAD_COLORS = ["from-blue-50 to-cyan-50 border-blue-100","from-violet-50 to-purple-50 border-violet-100","from-emerald-50 to-teal-50 border-emerald-100","from-rose-50 to-pink-50 border-rose-100","from-amber-50 to-orange-50 border-amber-100","from-cyan-50 to-sky-50 border-cyan-100","from-indigo-50 to-blue-50 border-indigo-100"];
                     return (
                       <div key={mod.key} className={`rounded-2xl border p-4 bg-gradient-to-br ${GRAD_COLORS[mi % GRAD_COLORS.length]}`}>
                         <div className="flex items-center gap-2 mb-3">
@@ -478,64 +684,41 @@ export default function UserProfile() {
                             </span>
                           )}
                         </div>
-
-                        {/* Rating buttons */}
                         <div className="flex flex-wrap gap-2 mb-3">
                           {RATINGS.map(r => (
                             <button key={r.val}
-                              onClick={()=>setFeedback(prev=>({ ...prev, [mod.key]:{ ...prev[mod.key], rating:r.val } }))}
+                              onClick={()=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],rating:r.val}}))}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition
                                 ${fb.rating===r.val ? r.color+" scale-105 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"}`}>
                               <span>{r.emoji}</span> {r.label}
                             </button>
                           ))}
                         </div>
-
-                        {/* Show reason if bad/worst */}
                         {isNeg && (
                           <div className="space-y-2">
-                            <input
-                              value={fb.reason}
-                              onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],reason:e.target.value}}))}
-                              placeholder="What went wrong? (required for bad/worst)"
-                              className="w-full px-3 py-2 border-2 border-red-200 rounded-xl text-xs outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-white"
-                            />
-                            <input
-                              value={fb.improvement}
-                              onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],improvement:e.target.value}}))}
-                              placeholder="How can we improve? (optional)"
-                              className="w-full px-3 py-2 border-2 border-orange-200 rounded-xl text-xs outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 bg-white"
-                            />
+                            <input value={fb.reason} onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],reason:e.target.value}}))}
+                              placeholder="What went wrong?" className="w-full px-3 py-2 border-2 border-red-200 rounded-xl text-xs outline-none focus:border-red-400 bg-white"/>
+                            <input value={fb.improvement} onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],improvement:e.target.value}}))}
+                              placeholder="How can we improve?" className="w-full px-3 py-2 border-2 border-orange-200 rounded-xl text-xs outline-none bg-white"/>
                           </div>
                         )}
-
-                        {/* Show improvement for average */}
                         {fb.rating === "average" && (
-                          <input
-                            value={fb.improvement}
-                            onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],improvement:e.target.value}}))}
-                            placeholder="What could make it better? (optional)"
-                            className="w-full px-3 py-2 border-2 border-yellow-200 rounded-xl text-xs outline-none focus:border-yellow-400 bg-white"
-                          />
+                          <input value={fb.improvement} onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],improvement:e.target.value}}))}
+                            placeholder="What could make it better?" className="w-full px-3 py-2 border-2 border-yellow-200 rounded-xl text-xs outline-none bg-white"/>
                         )}
                       </div>
                     );
                   })}
-
                   <button onClick={handleFeedbackSubmit} disabled={fbSubmitting}
                     className="w-full py-4 bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 text-white font-black text-base rounded-2xl hover:opacity-90 disabled:opacity-60 transition shadow-lg shadow-violet-200">
                     {fbSubmitting ? "Submitting..." : "🚀 Submit Feedback"}
                   </button>
-
-                  <p className="text-center text-xs text-gray-400">
-                    Your feedback helps us build a better platform for everyone 💜
-                  </p>
                 </div>
               </div>
             )}
 
-            {/* Activity summary cards */}
-            {tab !== "feedback" && (
+            {/* Activity cards */}
+            {tab !== "feedback" && tab !== "purchases" && (
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { icon:"📱", label:"Phone",  val:user.phone||"Not set",       color:"from-blue-50 to-cyan-50",    border:"border-blue-100",    text:"text-blue-700"    },
@@ -554,29 +737,24 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* ✅ Delete account modal */}
+      {/* Delete modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm">
             <div className="text-center mb-5">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">🗑️</div>
               <h3 className="text-xl font-black text-gray-900">Delete Account</h3>
-              <p className="text-sm text-gray-500 mt-1">This action is permanent and cannot be undone. All your data will be lost.</p>
+              <p className="text-sm text-gray-500 mt-1">This action is permanent and cannot be undone.</p>
             </div>
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
               <p className="text-xs text-red-600 font-semibold text-center">Type <span className="font-black">DELETE</span> to confirm</p>
             </div>
-            <input
-              value={deleteInput}
-              onChange={e=>setDeleteInput(e.target.value)}
+            <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)}
               placeholder='Type "DELETE"'
-              className="w-full px-4 py-3 border-2 border-red-200 rounded-xl text-sm outline-none focus:border-red-400 mb-4 text-center font-bold tracking-widest"
-            />
+              className="w-full px-4 py-3 border-2 border-red-200 rounded-xl text-sm outline-none focus:border-red-400 mb-4 text-center font-bold tracking-widest"/>
             <div className="flex gap-3">
               <button onClick={()=>{ setShowDeleteConfirm(false); setDeleteInput(""); }}
-                className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
-                Cancel
-              </button>
+                className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
               <button onClick={handleDeleteAccount} disabled={deleteLoading || deleteInput!=="DELETE"}
                 className="flex-1 py-3 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 transition">
                 {deleteLoading ? "Deleting..." : "Delete Forever"}
