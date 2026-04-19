@@ -27,7 +27,7 @@ def get_groq():
     global _groq_client
     if _groq_client is None:
         from groq import Groq
-        api_key = os.environ.get("GROQ_API_KEY", "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")
+        api_key = os.environ.get("GROQ_API_KEY")
         _groq_client = Groq(api_key=api_key)
     return _groq_client
 

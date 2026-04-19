@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Star, Award, BookOpen, SlidersHorizontal, X } from "lucide-react";
+import { MapPin, Star, Award, BookOpen, SlidersHorizontal, X, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import collegeIITDelhi  from "../assets/college-iit-delhi.jpg";
@@ -66,12 +66,16 @@ const AllColleges = () => {
   });
   const navigate = useNavigate();
 
+  // Auth guard
+  const isLoggedIn = !!localStorage.getItem("user");
+
   useEffect(() => {
+    if (!isLoggedIn) return; // don't fetch if not logged in
     fetch("http://127.0.0.1:5000/api/colleges")
       .then((r) => r.json())
       .then((data) => { setColleges(data); setFiltered(data); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     let result = colleges;
@@ -86,6 +90,38 @@ const AllColleges = () => {
   const clearAll = () => setFilters({ category: "", type: "", course: "", exam: "" });
   const activeCount = Object.values(filters).filter(Boolean).length;
 
+  // ── AUTH WALL ──────────────────────────────────────────────
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Lock className="w-8 h-8 text-blue-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Login Required</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            Create a free account to explore all top colleges, filter by category, fees, courses & more.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate("/register")}
+              className="px-6 py-2.5 border border-blue-200 text-blue-600 font-bold rounded-full hover:bg-blue-50 transition"
+            >
+              Register Free
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // ──────────────────────────────────────────────────────────
+
   const FilterPanel = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -97,7 +133,6 @@ const AllColleges = () => {
         )}
       </div>
 
-      {/* Category */}
       <div>
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Category</p>
         <div className="space-y-1">
@@ -115,7 +150,6 @@ const AllColleges = () => {
         </div>
       </div>
 
-      {/* Type */}
       <div>
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">College Type</p>
         <div className="space-y-1">
@@ -133,7 +167,6 @@ const AllColleges = () => {
         </div>
       </div>
 
-      {/* Exam */}
       <div>
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Exam Accepted</p>
         <div className="space-y-1">
@@ -151,7 +184,6 @@ const AllColleges = () => {
         </div>
       </div>
 
-      {/* Course */}
       <div>
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Course</p>
         <div className="space-y-1">
@@ -173,7 +205,6 @@ const AllColleges = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Hero */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-10 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-1">Top Colleges in India</h1>
@@ -184,7 +215,6 @@ const AllColleges = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Active filters */}
         {activeCount > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {Object.entries(filters).map(([key, val]) =>
@@ -201,16 +231,13 @@ const AllColleges = () => {
         )}
 
         <div className="flex gap-6">
-          {/* Sidebar — desktop */}
           <aside className="hidden lg:block w-56 flex-shrink-0">
             <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 sticky top-24">
               <FilterPanel />
             </div>
           </aside>
 
-          {/* Main */}
           <div className="flex-1">
-            {/* Mobile filter toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="lg:hidden flex items-center gap-2 mb-4 text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 text-gray-700 dark:text-gray-300"
@@ -225,7 +252,6 @@ const AllColleges = () => {
               </div>
             )}
 
-            {/* Results count */}
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Showing <span className="font-semibold text-gray-800 dark:text-gray-200">{filtered.length}</span> colleges
             </p>
@@ -248,7 +274,6 @@ const AllColleges = () => {
                       className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden
                                  hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                     >
-                      {/* College Image */}
                       <div className="h-40 w-full overflow-hidden relative">
                         {img ? (
                           <img
@@ -270,7 +295,6 @@ const AllColleges = () => {
                         )}
                       </div>
 
-                      {/* Info */}
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${categoryColor[college.category] || "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"}`}>

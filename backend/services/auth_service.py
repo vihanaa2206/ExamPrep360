@@ -1,3 +1,4 @@
+import os
 from flask_mail import Message
 from extensions import mail, mongo
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,7 +11,7 @@ from repositories.auth_respository import (
 )
 from services.otp_service import generate_otp
 
-SECRET_KEY = "exam_prep_secret"
+SECRET_KEY = os.environ.get("JWT_SECRET", "exam_prep_secret")
 
 
 # ================= EMAIL — UNCHANGED =================

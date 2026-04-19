@@ -1,5 +1,15 @@
 import { useNavigate } from "react-router-dom";
 
+// ── Login check helper ────────────────────────────────────────
+const isLoggedIn = () => {
+  try {
+    const user = localStorage.getItem("user");
+    if (!user) return false;
+    const parsed = JSON.parse(user);
+    return !!(parsed?._id || parsed?.id || parsed?.email);
+  } catch { return false; }
+};
+
 export default function BrowseMenu() {
   const navigate = useNavigate();
 
@@ -11,6 +21,14 @@ export default function BrowseMenu() {
     "Law",
     "Government Exams",
   ];
+
+  const handleExplore = (stream) => {
+    if (!isLoggedIn()) {
+      navigate("/login");
+      return;
+    }
+    navigate(`/stream/${stream.toLowerCase().replace(/\s+/g, "-")}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-24">
@@ -35,9 +53,7 @@ export default function BrowseMenu() {
               </h2>
 
               <button
-                onClick={() =>
-                  navigate(`/stream/${stream.toLowerCase().replace(/\s+/g, "-")}`)
-                }
+                onClick={() => handleExplore(stream)}
                 className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
               >
                 Explore Now

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Clock, ExternalLink, SlidersHorizontal, X, Zap, Building2, BookOpen } from "lucide-react";
+import { Clock, ExternalLink, SlidersHorizontal, X, Building2, BookOpen, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import newsExam    from "../assets/news-exam.jpg";
 import newsSchool  from "../assets/news-school.jpg";
@@ -36,6 +37,41 @@ const AllNotifications = () => {
   const [filters, setFilters] = useState({
     category: "", update_type: "", notif_type: "",
   });
+  const navigate = useNavigate();
+
+  const isLoggedIn = !!localStorage.getItem("user");
+
+  // ── AUTH WALL ──────────────────────────────────────────────
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center px-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Lock className="w-8 h-8 text-indigo-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Login Required</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            Register free to get live updates on exam dates, admit cards, results, cutoffs & more.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 transition"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate("/register")}
+              className="px-6 py-2.5 border border-indigo-200 text-indigo-600 font-bold rounded-full hover:bg-indigo-50 transition"
+            >
+              Register Free
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // ──────────────────────────────────────────────────────────
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/notifications")
@@ -63,8 +99,6 @@ const AllNotifications = () => {
           <button onClick={clearAll} className="text-xs text-red-500 hover:underline">Clear all</button>
         )}
       </div>
-
-      {/* Type — Exam or College */}
       <div>
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Notification Type</p>
         <div className="space-y-1.5">
@@ -79,8 +113,6 @@ const AllNotifications = () => {
           ))}
         </div>
       </div>
-
-      {/* Category */}
       <div>
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Category</p>
         <div className="space-y-1.5">
@@ -95,8 +127,6 @@ const AllNotifications = () => {
           ))}
         </div>
       </div>
-
-      {/* Update Type */}
       <div>
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Update Type</p>
         <div className="space-y-1.5">
@@ -116,16 +146,12 @@ const AllNotifications = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
-      {/* Hero */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-10 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-1">Latest Exam & College Notifications</h1>
           <p className="text-indigo-100 text-sm">
             Real-time updates on exams, admissions, placements, cutoffs, rankings & more
           </p>
-
-          {/* Quick type toggle */}
           <div className="flex gap-3 mt-4">
             {NOTIF_TYPES.map((t) => (
               <button key={t.value}
@@ -143,18 +169,13 @@ const AllNotifications = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-
-        {/* Active chips */}
         {activeCount > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {Object.entries(filters).map(([key, val]) =>
               val ? (
-                <span key={key}
-                  className="flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <span key={key} className="flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full">
                   {val}
-                  <button onClick={() => setFilters((f) => ({ ...f, [key]: "" }))}>
-                    <X className="w-3 h-3" />
-                  </button>
+                  <button onClick={() => setFilters((f) => ({ ...f, [key]: "" }))}><X className="w-3 h-3" /></button>
                 </span>
               ) : null
             )}
@@ -162,8 +183,6 @@ const AllNotifications = () => {
         )}
 
         <div className="flex gap-6">
-
-          {/* Sidebar */}
           <aside className="hidden lg:block w-60 flex-shrink-0">
             <div className="bg-white border border-gray-200 rounded-2xl p-5 sticky top-24">
               <FilterPanel />
@@ -171,14 +190,11 @@ const AllNotifications = () => {
           </aside>
 
           <div className="flex-1">
-
-            {/* Mobile toggle */}
             <button onClick={() => setShowFilters(!showFilters)}
               className="lg:hidden flex items-center gap-2 mb-4 text-sm font-medium bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
               <SlidersHorizontal className="w-4 h-4" />
               Filters {activeCount > 0 && `(${activeCount})`}
             </button>
-
             {showFilters && (
               <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-5 mb-4">
                 <FilterPanel />
@@ -204,8 +220,6 @@ const AllNotifications = () => {
                     className="bg-white border border-gray-200 rounded-xl p-4 flex gap-4
                                hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300
                                cursor-pointer group">
-
-                    {/* Thumbnail */}
                     <div className="w-24 h-20 flex-shrink-0 rounded-lg overflow-hidden">
                       <img
                         src={FALLBACK_IMAGES[index % FALLBACK_IMAGES.length]}
@@ -213,45 +227,30 @@ const AllNotifications = () => {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
-
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
-
-                      {/* Top row */}
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${UPDATE_TYPE_COLORS[item.update_type] || "bg-gray-100 text-gray-700"}`}>
                           {item.update_type}
                         </span>
                         {item.is_new && (
                           <span className="flex items-center gap-1 text-xs font-bold text-red-500">
-                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                            NEW
+                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />NEW
                           </span>
                         )}
-
-                        {/* Exam or College tag */}
                         {item.type === "college" ? (
                           <span className="flex items-center gap-1 text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-                            <Building2 className="w-3 h-3" />
-                            {item.college_name}
+                            <Building2 className="w-3 h-3" />{item.college_name}
                           </span>
                         ) : (
                           <span className="flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                            <BookOpen className="w-3 h-3" />
-                            {item.exam_name}
+                            <BookOpen className="w-3 h-3" />{item.exam_name}
                           </span>
                         )}
                       </div>
-
-                      {/* Title */}
                       <h3 className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-1">
                         {item.title}
                       </h3>
-
-                      {/* Summary */}
                       <p className="text-xs text-gray-500 line-clamp-2 mb-2">{item.summary}</p>
-
-                      {/* Footer */}
                       <div className="flex items-center justify-between">
                         <p className="text-xs text-gray-400 flex items-center gap-1">
                           <Clock className="w-3 h-3" />{item.date}

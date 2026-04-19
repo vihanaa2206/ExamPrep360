@@ -57,10 +57,10 @@ const STREAMS = [
     name: "Law", slug: "law",
     icon: Scale, color: "bg-amber-100 text-amber-600",
     exams: [
-      { label: "CLAT",     slug: "clat" },
-      { label: "AILET",    slug: "ailet" },
-      { label: "DU LLB",   slug: "du-llb" },
-      { label: "AP LAWCET",slug: "ap-lawcet" },
+      { label: "CLAT",      slug: "clat" },
+      { label: "AILET",     slug: "ailet" },
+      { label: "DU LLB",    slug: "du-llb" },
+      { label: "AP LAWCET", slug: "ap-lawcet" },
     ],
   },
   {
@@ -82,9 +82,26 @@ const QUICK_LINKS = [
   { icon: Bell,     label: "Notifications",   path: "/notifications" },
 ];
 
+// ── Login check helper ────────────────────────────────────────
+const isLoggedIn = () => {
+  try {
+    const user = localStorage.getItem("user");
+    return !!user && !!JSON.parse(user)?._id || !!JSON.parse(user)?.id || !!JSON.parse(user)?.email;
+  } catch { return false; }
+};
+
 export default function BrowseDropdown() {
   const navigate = useNavigate();
   const [active, setActive] = useState(STREAMS[0]);
+
+  // ── Guard: redirect to login if not logged in ─────────────
+  const guardedNavigate = (path) => {
+    if (!isLoggedIn()) {
+      navigate("/login");
+      return;
+    }
+    navigate(path);
+  };
 
   return (
     <div
@@ -106,7 +123,7 @@ export default function BrowseDropdown() {
               <button
                 key={stream.slug}
                 onMouseEnter={() => setActive(stream)}
-                onClick={() => navigate(`/stream/${stream.slug}`)}
+                onClick={() => guardedNavigate(`/stream/${stream.slug}`)}
                 className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium
                   transition-all text-left
                   ${isActive
@@ -145,7 +162,7 @@ export default function BrowseDropdown() {
               {active.exams.map((exam) => (
                 <button
                   key={exam.slug}
-                  onClick={() => navigate(`/exam/${exam.slug}`)}
+                  onClick={() => guardedNavigate(`/exam/${exam.slug}`)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700
                              hover:bg-blue-50 hover:text-blue-600 transition-colors text-left group"
                 >
@@ -155,7 +172,7 @@ export default function BrowseDropdown() {
                 </button>
               ))}
               <button
-                onClick={() => navigate(`/stream/${active.slug}`)}
+                onClick={() => guardedNavigate(`/stream/${active.slug}`)}
                 className="col-span-2 flex items-center gap-1 px-3 py-2 rounded-lg text-xs
                            text-blue-600 font-semibold hover:bg-blue-50 transition-colors text-left mt-1"
               >
@@ -175,7 +192,7 @@ export default function BrowseDropdown() {
                 return (
                   <button
                     key={link.label}
-                    onClick={() => navigate(link.path)}
+                    onClick={() => guardedNavigate(link.path)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-600
                                hover:bg-gray-100 hover:text-gray-900 transition-colors text-left"
                   >
@@ -196,7 +213,7 @@ export default function BrowseDropdown() {
           Explore 100+ exams across 6 streams
         </p>
         <button
-          onClick={() => navigate("/notifications")}
+          onClick={() => guardedNavigate("/notifications")}
           className="text-xs text-blue-200 hover:text-white font-semibold transition-colors"
         >
           🔔 Latest Notifications →
