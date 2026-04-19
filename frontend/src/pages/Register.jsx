@@ -47,7 +47,7 @@ const Register = () => {
     try {
       setError("");
       setOtpLoading(true);
-      await axios.post("http://127.0.0.1:5000/auth/email/send-otp", { email });
+      await axios.post("https://examprep360-production.up.railway.app/auth/email/send-otp", { email });
       setShowOtpBox(true);
     } catch {
       setError("Failed to send OTP");
@@ -63,7 +63,7 @@ const Register = () => {
     }
     try {
       setError("");
-      await axios.post("http://127.0.0.1:5000/auth/email/verify-otp", {
+      await axios.post("https://examprep360-production.up.railway.app/auth/email/verify-otp", {
         email,
         otp,
       });
@@ -127,7 +127,7 @@ const Register = () => {
 
     try {
       setLoading(true);
-      await axios.post("http://127.0.0.1:5000/auth/register/complete", {
+      await axios.post("https://examprep360-production.up.railway.app/auth/register/complete", {
         name,
         email,
         password,

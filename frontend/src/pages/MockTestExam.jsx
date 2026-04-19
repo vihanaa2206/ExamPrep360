@@ -7,7 +7,7 @@ import {
   Info, BookOpen, Target, Award, Minus,
 } from "lucide-react";
 
-const API = "http://127.0.0.1:5000/api";
+const API = "https://examprep360-production.up.railway.app/api";
 
 const MARKING_SCHEME = {
   "JEE Main":     { correct:4,  wrong:-1,    label:"+4 / -1",    description:"4 marks for correct, -1 for wrong" },

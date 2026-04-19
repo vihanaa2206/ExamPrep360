@@ -74,7 +74,7 @@ const AllNotifications = () => {
   // ──────────────────────────────────────────────────────────
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/notifications")
+    fetch("https://examprep360-production.up.railway.app/api/notifications")
       .then((r) => r.json())
       .then((data) => { setNotifications(data); setFiltered(data); setLoading(false); })
       .catch(() => setLoading(false));

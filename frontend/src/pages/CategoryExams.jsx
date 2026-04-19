@@ -40,7 +40,7 @@ function CategoryExams() {
     setLoading(true);
     setError(false);
 
-    fetch(`http://127.0.0.1:5000/api/exams?category=${encodeURIComponent(categoryName)}`)
+    fetch(`https://examprep360-production.up.railway.app/api/exams?category=${encodeURIComponent(categoryName)}`)
       .then(r => {
         if (!r.ok) throw new Error("fetch failed");
         return r.json();

@@ -9,7 +9,7 @@ import {
   AlertCircle, Trash2,
 } from "lucide-react";
 
-const API = "http://127.0.0.1:5000/api";
+const API = "https://examprep360-production.up.railway.app/api";
 
 const PLAN_META = {
   basic:    { label: "Basic",    color: "bg-blue-100 text-blue-700 border-blue-200",       dot: "bg-blue-500"   },

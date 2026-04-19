@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
-const BASE = "http://127.0.0.1:5000/api";
+const BASE = "https://examprep360-production.up.railway.app/api";
 
 export default function AdminProfile() {
   const navigate  = useNavigate();

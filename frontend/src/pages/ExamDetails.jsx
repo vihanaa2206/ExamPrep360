@@ -503,7 +503,7 @@ const ExamDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/exams/" + slug)
+    fetch("https://examprep360-production.up.railway.app/api/exams/" + slug)
       .then((res) => {
         if (!res.ok) throw new Error("Exam not found");
         return res.json();

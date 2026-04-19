@@ -163,7 +163,7 @@ const CoachingComparison = ({ examSlug }) => {
   setSelected([]);
   setError(null);
 
-  fetch(`http://127.0.0.1:5000/api/coachings/${examSlug}`)
+  fetch(`https://examprep360-production.up.railway.app/api/coachings/${examSlug}`)
     .then((res) => {
       if (!res.ok) {
         throw new Error("Failed to load coaching data");

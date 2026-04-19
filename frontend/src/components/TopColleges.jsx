@@ -35,7 +35,7 @@ const TopColleges = () => {
   const isLoggedIn = !!localStorage.getItem("user");
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/colleges")
+    fetch("https://examprep360-production.up.railway.app/api/colleges")
       .then((r) => r.json())
       .then((data) => setColleges(data.slice(0, 4)))
       .catch(() => {});

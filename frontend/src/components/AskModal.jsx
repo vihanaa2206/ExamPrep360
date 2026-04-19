@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import API from "../services/api";
 
 // ── Direct base URL for ask routes (no /api prefix) ──────────────────────
-const BASE = "http://127.0.0.1:5000";
+const BASE = "https://examprep360-production.up.railway.app";
 
 export default function AskModal({ onClose }) {
   const [question, setQuestion]         = useState("");

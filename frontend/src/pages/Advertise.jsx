@@ -1,7 +1,7 @@
 import { Send, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useEffect } from "react";
 
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = "https://examprep360-production.up.railway.app";
 
 export default function Advertise() {
   const [form, setForm] = useState({ name: "", company: "", email: "", phone: "", budget: "" });

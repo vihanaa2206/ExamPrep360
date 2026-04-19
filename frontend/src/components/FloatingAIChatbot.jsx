@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, Send } from "lucide-react";
 
 // ✅ Same port as tera backend (Flask default 5000)
-const AI_BASE = "http://127.0.0.1:5000";
+const AI_BASE = "https://examprep360-production.up.railway.app";
 
 const CATEGORIES = [
   { icon: "📚", label: "Exam Pattern" },

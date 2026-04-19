@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { MessageSquare, X, Bot, User, Search, Trash2, Clock, ChevronRight, RefreshCw } from "lucide-react";
 
-const BASE = "http://127.0.0.1:5000";
+const BASE = "https://examprep360-production.up.railway.app";
 
 export default function AdminAIChatLogs() {
   const [sessions, setSessions]             = useState([]);
