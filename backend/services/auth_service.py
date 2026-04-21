@@ -1,6 +1,6 @@
 import os
-from flask_mail import Message
-from extensions import mail, mongo
+import resend
+from extensions import mongo
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
@@ -12,16 +12,17 @@ from repositories.auth_respository import (
 from services.otp_service import generate_otp
 
 SECRET_KEY = os.environ.get("JWT_SECRET", "exam_prep_secret")
+resend.api_key = os.environ.get("RESEND_API_KEY")
 
 
-# ================= EMAIL — UNCHANGED =================
+# ================= EMAIL — RESEND =================
 def send_otp_email(email, otp):
-    msg = Message(
-        subject="Your OTP Verification Code",
-        recipients=[email],
-        body=f"Your OTP is: {otp}\nValid for 1 minute."
-    )
-    mail.send(msg)
+    resend.Emails.send({
+        "from": "ExamPrep360 <onboarding@resend.dev>",
+        "to": [email],
+        "subject": "Your OTP Verification Code",
+        "text": f"Your OTP is: {otp}\nValid for 1 minute."
+    })
 
 
 # ================= REGISTER COMPLETE =================
@@ -35,14 +36,10 @@ def complete_registration(
     student_type=None,
     institute_name=None
 ):
-    # 🔒 Check if already exists — UNCHANGED
     if get_user_by_email(email):
         return None, "Email already registered"
 
-    # 🔐 Hash password — UNCHANGED
     hashed_password = generate_password_hash(password)
-
-    # 🎯 Role logic — UNCHANGED
     role = "admin" if email == "admin@gmail.com" else "user"
 
     user = add_user(
@@ -56,7 +53,6 @@ def complete_registration(
         institute_name=institute_name
     )
 
-    # ✅ NEW: registered_at + empty history fields save karo
     mongo.db.users.update_one(
         {"email": email},
         {"$set": {
@@ -72,7 +68,6 @@ def complete_registration(
 
 # ================= LOGIN =================
 def login_user(email, password):
-    # UNCHANGED logic
     user = get_user_by_email(email)
     if not user:
         return None, "This email is not registered. Please register first."
@@ -95,7 +90,6 @@ def login_user(email, password):
         algorithm="HS256"
     )
 
-    # ✅ NEW: login time history save karo
     login_entry = {
         "login_time": datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "status": "logged_in"
@@ -119,7 +113,7 @@ def login_user(email, password):
     return user, token
 
 
-# ================= FORGOT PASSWORD — BILKUL UNCHANGED =================
+# ================= FORGOT PASSWORD =================
 def forgot_password(email):
     user = get_user_by_email(email)
     if not user:
@@ -137,14 +131,12 @@ def forgot_password(email):
 
 # ================= RESET PASSWORD =================
 def update_password(email, new_password):
-    # UNCHANGED logic
     user = get_user_by_email(email)
     if not user:
         return False, "User not found"
 
     hashed_password = generate_password_hash(new_password)
 
-    # ✅ NEW: password change history bhi save karo
     change_entry = {
         "changed_at": datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
