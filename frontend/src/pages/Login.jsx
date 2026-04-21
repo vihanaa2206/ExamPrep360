@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import API from "../services/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,24 +17,8 @@ const Login = () => {
     setInfo("");
 
     try {
-      const res = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      // 🔴 LOGIN FAILED
-      if (!res.ok) {
-        if (data.error && data.error.toLowerCase().includes("not registered")) {
-          setInfo(data.error);
-          setTimeout(() => { navigate("/register"); }, 1500);
-        } else {
-          setError(data.error || "Login failed");
-        }
-        return;
-      }
+      const res  = await API.post("/auth/login", { email, password });
+      const data = res.data;
 
       // ✅ Check blocked / suspended BEFORE storing
       const userStatus  = (data.user.status || "").toLowerCase();
@@ -53,8 +38,16 @@ const Login = () => {
       } else {
         navigate("/");
       }
-    } catch {
-      setError("Server not responding");
+    } catch (err) {
+      const msg = err.response?.data?.error || "";
+      if (msg.toLowerCase().includes("not registered")) {
+        setInfo(msg);
+        setTimeout(() => { navigate("/register"); }, 1500);
+      } else if (msg) {
+        setError(msg);
+      } else {
+        setError("Server not responding");
+      }
     }
   };
 
