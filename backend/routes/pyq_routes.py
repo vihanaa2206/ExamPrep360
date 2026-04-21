@@ -7,12 +7,6 @@ from werkzeug.utils import secure_filename
 
 pyq_bp = Blueprint("pyq_bp", __name__)
 
-cloudinary.config(
-    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.environ.get("CLOUDINARY_API_KEY"),
-    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
-)
-
 CATEGORY_MAP = {
     "COMEDK UGET":"Engineering","Jee Advanced":"Engineering","Jee Main":"Engineering",
     "Jee Main With Solutions":"Engineering","KCET":"Engineering","MHT CET":"Engineering",
@@ -25,12 +19,20 @@ CATEGORY_MAP = {
     "IBPS PO":"Government","RRB NTPC":"Government","SSC CGL":"Government","UPSC CSE":"Government",
 }
 
+def init_cloudinary():
+    cloudinary.config(
+        cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+        api_key=os.environ.get("CLOUDINARY_API_KEY"),
+        api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+    )
+
 def folder_name(exam_name):
     return f"pyqs/{exam_name}"
 
 
 @pyq_bp.route("/pyq/exams", methods=["GET"])
 def get_pyq_exams():
+    init_cloudinary()
     try:
         result = cloudinary.api.subfolders("pyqs")
         folders = [f["name"] for f in result.get("folders", [])]
@@ -42,6 +44,7 @@ def get_pyq_exams():
 
 @pyq_bp.route("/pyq/files/<exam_name>", methods=["GET"])
 def get_pyq_files(exam_name):
+    init_cloudinary()
     try:
         result = cloudinary.api.resources(
             type="upload",
@@ -66,6 +69,7 @@ def get_pyq_files(exam_name):
 
 @pyq_bp.route("/pyq/upload", methods=["POST"])
 def upload_pyq():
+    init_cloudinary()
     exam_name = request.form.get("exam_name", "").strip()
     if not exam_name:
         return jsonify({"error": "exam_name required"}), 400
@@ -91,6 +95,7 @@ def upload_pyq():
 
 @pyq_bp.route("/pyq/delete", methods=["DELETE"])
 def delete_pyq_file():
+    init_cloudinary()
     data = request.get_json()
     public_id = data.get("public_id", "").strip()
     if not public_id:
@@ -101,12 +106,11 @@ def delete_pyq_file():
 
 @pyq_bp.route("/pyq/create-folder", methods=["POST"])
 def create_pyq_folder():
+    init_cloudinary()
     data = request.get_json()
     exam_name = data.get("exam_name", "").strip()
     if not exam_name:
         return jsonify({"error": "exam_name required"}), 400
-    # Cloudinary mein folder auto-create hota hai upload pe
-    # Placeholder upload karke folder banate hain
     cloudinary.uploader.upload(
         "data:text/plain;base64,Lg==",
         resource_type="raw",
@@ -118,6 +122,7 @@ def create_pyq_folder():
 
 @pyq_bp.route("/pyq/delete-folder", methods=["DELETE"])
 def delete_pyq_folder():
+    init_cloudinary()
     data = request.get_json()
     exam_name = data.get("exam_name", "").strip()
     if not exam_name:
