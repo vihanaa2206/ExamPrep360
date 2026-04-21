@@ -88,17 +88,17 @@ export default function AdminPYQs() {
     else showToast("Only PDF files allowed","error");
   };
 
-  const handleDeleteFile = async (filename) => {
-    if(!window.confirm(`Delete "${filename}"?`)) return;
-    try {
-      const res = await fetch(`${API}/pyq/delete`,{
-        method:"DELETE", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({exam_name:selExam,filename}),
-      });
-      if(res.ok){showToast("File deleted!"); fetchFiles(selExam);}
-      else showToast("Delete failed","error");
-    } catch { showToast("Network error","error"); }
-  };
+  const handleDeleteFile = async (file) => {
+  if(!window.confirm(`Delete "${file.name}"?`)) return;
+  try {
+    const res = await fetch(`${API}/pyq/delete`,{
+      method:"DELETE", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({public_id: file.public_id}),
+    });
+    if(res.ok){showToast("File deleted!"); fetchFiles(selExam);}
+    else showToast("Delete failed","error");
+  } catch { showToast("Network error","error"); }
+};
 
   const handleCreateFolder = async () => {
     if(!newFolder.trim()) return showToast("Enter folder name","error");
@@ -325,7 +325,7 @@ export default function AdminPYQs() {
                           title="Download">
                           <Download className="w-4 h-4"/>
                         </a>
-                        <button onClick={()=>handleDeleteFile(file.name)}
+                        <button onClick={()=>handleDeleteFile(file)}
                           className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
                           title="Delete">
                           <Trash2 className="w-4 h-4"/>
