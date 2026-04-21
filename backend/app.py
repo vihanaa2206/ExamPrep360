@@ -4,7 +4,7 @@ load_dotenv()
 import logging
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from routes.reports_routes import reports_bp
@@ -32,6 +32,15 @@ CORS(app,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'https://exam-prep360.vercel.app')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
+
 # ---------------- MongoDB Config ---------------- #
 app.config["MONGO_URI"] = os.environ.get("MONGO_URI")
 
@@ -49,7 +58,7 @@ mongo.init_app(app)
 # ---------------- Register Blueprints ---------------- #
 app.register_blueprint(exam_bp,          url_prefix="/api")
 app.register_blueprint(coaching_bp,      url_prefix="/api")
-app.register_blueprint(auth_bp)
+app.register_blueprint(auth_bp,          url_prefix="/api")
 app.register_blueprint(user_bp,          url_prefix="/api")
 app.register_blueprint(ask_bp)
 app.register_blueprint(query_bp,         url_prefix="/api")
