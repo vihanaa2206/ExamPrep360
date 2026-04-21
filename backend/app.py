@@ -26,7 +26,11 @@ from extensions import mail, mongo
 
 app = Flask(__name__)
 
-CORS(app, origins=["https://exam-prep360.vercel.app"], supports_credentials=True)
+CORS(app, 
+     origins=["https://exam-prep360.vercel.app"],
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"])
 
 # ---------------- MongoDB Config ---------------- #
 app.config["MONGO_URI"] = os.environ.get("MONGO_URI")
