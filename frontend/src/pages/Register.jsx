@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // ✅ Eye toggle states
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -28,7 +27,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
 
-  // ✅ Password strength checker
   const validatePassword = (pwd) => {
     if (pwd.length < 8) return "Password must be at least 8 characters";
     if (!/[A-Z]/.test(pwd)) return "Password must contain at least one uppercase letter";
@@ -40,14 +38,11 @@ const Register = () => {
   };
 
   const sendOtp = async () => {
-    if (!email) {
-      setError("Enter email first");
-      return;
-    }
+    if (!email) { setError("Enter email first"); return; }
     try {
       setError("");
       setOtpLoading(true);
-      await axios.post("https://examprep360-production.up.railway.app/auth/email/send-otp", { email });
+      await API.post("/auth/email/send-otp", { email });
       setShowOtpBox(true);
     } catch {
       setError("Failed to send OTP");
@@ -57,16 +52,10 @@ const Register = () => {
   };
 
   const verifyEmailOtp = async () => {
-    if (!otp) {
-      setError("Enter OTP");
-      return;
-    }
+    if (!otp) { setError("Enter OTP"); return; }
     try {
       setError("");
-      await axios.post("https://examprep360-production.up.railway.app/auth/email/verify-otp", {
-        email,
-        otp,
-      });
+      await API.post("/auth/email/verify-otp", { email, otp });
       setEmailVerified(true);
       setShowOtpBox(false);
     } catch (err) {
@@ -78,64 +67,27 @@ const Register = () => {
     e.preventDefault();
     setError("");
 
-    // ✅ All fields mandatory checks
-    if (!name.trim()) {
-      setError("Name is required");
-      return;
-    }
-    if (!email.trim()) {
-      setError("Email is required");
-      return;
-    }
-    if (!emailVerified) {
-      setError("Please verify email first");
-      return;
-    }
+    if (!name.trim())        { setError("Name is required"); return; }
+    if (!email.trim())       { setError("Email is required"); return; }
+    if (!emailVerified)      { setError("Please verify email first"); return; }
 
-    // ✅ Strong password validation
     const pwdError = validatePassword(password);
-    if (pwdError) {
-      setError(pwdError);
-      return;
-    }
-    if (!confirmPassword) {
-      setError("Please confirm your password");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+    if (pwdError)            { setError(pwdError); return; }
+    if (!confirmPassword)    { setError("Please confirm your password"); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match"); return; }
+    if (!designation)        { setError("Select designation first"); return; }
 
-    // ✅ Designation mandatory
-    if (!designation) {
-      setError("Select designation first");
-      return;
-    }
-
-    // ✅ Institute mandatory for student/professor
     if ((designation === "student" || designation === "professor") && !institute.trim()) {
-      setError("Please enter your School / College name");
-      return;
+      setError("Please enter your School / College name"); return;
     }
-
-    // ✅ Profession mandatory for other
     if (designation === "other" && !profession.trim()) {
-      setError("Please enter your profession");
-      return;
+      setError("Please enter your profession"); return;
     }
 
     try {
       setLoading(true);
-      await axios.post("https://examprep360-production.up.railway.app/auth/register/complete", {
-        name,
-        email,
-        password,
-        designation,
-        profession,
-        studentType,
-        institute,
-        otp: "verified",
+      await API.post("/auth/register/complete", {
+        name, email, password, designation, profession, studentType, institute, otp: "verified",
       });
       navigate("/login");
     } catch (err) {
@@ -145,7 +97,6 @@ const Register = () => {
     }
   };
 
-  // ✅ Live password strength indicator
   const getPasswordStrength = () => {
     if (!password) return null;
     const error = validatePassword(password);
@@ -156,13 +107,9 @@ const Register = () => {
 
   const strength = getPasswordStrength();
 
-  // ✅ Eye icon component
   const EyeIcon = ({ show, toggle }) => (
-    <button
-      type="button"
-      onClick={toggle}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-    >
+    <button type="button" onClick={toggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
       {show ? (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
           viewBox="0 0 24 24" stroke="currentColor">
@@ -198,134 +145,73 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <input value={name} onChange={(e) => setName(e.target.value)}
+            placeholder="Name *" className="w-full border px-3 py-2 rounded" />
 
-          {/* Name */}
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name *"
-            className="w-full border px-3 py-2 rounded"
-          />
-
-          {/* Email + Verify */}
           <div className="flex gap-2">
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email *"
-              className="w-full border px-3 py-2 rounded"
-              disabled={emailVerified}
-            />
-            <button
-              type="button"
-              onClick={sendOtp}
+            <input value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email *" className="w-full border px-3 py-2 rounded"
+              disabled={emailVerified} />
+            <button type="button" onClick={sendOtp}
               disabled={otpLoading || emailVerified}
-              className="px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700"
-            >
+              className="px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700">
               {emailVerified ? "✓ Verified" : otpLoading ? "Sending..." : "Verify"}
             </button>
           </div>
 
-          {/* OTP Box */}
           {showOtpBox && !emailVerified && (
             <div className="flex gap-2">
-              <input
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter OTP"
-                className="w-full border px-3 py-2 rounded"
-              />
-              <button
-                type="button"
-                onClick={verifyEmailOtp}
-                className="px-4 py-2 rounded bg-green-600 text-white font-medium hover:bg-green-700"
-              >
+              <input value={otp} onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter OTP" className="w-full border px-3 py-2 rounded" />
+              <button type="button" onClick={verifyEmailOtp}
+                className="px-4 py-2 rounded bg-green-600 text-white font-medium hover:bg-green-700">
                 Confirm
               </button>
             </div>
           )}
 
-          {/* Password with eye toggle */}
           <div>
             <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
+              <input type={showPassword ? "text" : "password"} value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password *"
-                className="w-full border px-3 py-2 rounded pr-10"
-              />
-              <EyeIcon
-                show={showPassword}
-                toggle={() => setShowPassword(!showPassword)}
-              />
+                placeholder="Password *" className="w-full border px-3 py-2 rounded pr-10" />
+              <EyeIcon show={showPassword} toggle={() => setShowPassword(!showPassword)} />
             </div>
-            {/* Strength indicator */}
             {password && (
               <div className="mt-1">
-                <p className={`text-xs font-medium ${strength?.color}`}>
-                  Strength: {strength?.label}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Min 8 chars · uppercase · lowercase · digit · special char (!@#$%...)
-                </p>
+                <p className={`text-xs font-medium ${strength?.color}`}>Strength: {strength?.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">Min 8 chars · uppercase · lowercase · digit · special char (!@#$%...)</p>
               </div>
             )}
           </div>
 
-          {/* Confirm Password with eye toggle */}
           <div className="relative">
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              value={confirmPassword}
+            <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm Password *"
-              className="w-full border px-3 py-2 rounded pr-10"
-            />
-            <EyeIcon
-              show={showConfirmPassword}
-              toggle={() => setShowConfirmPassword(!showConfirmPassword)}
-            />
+              placeholder="Confirm Password *" className="w-full border px-3 py-2 rounded pr-10" />
+            <EyeIcon show={showConfirmPassword} toggle={() => setShowConfirmPassword(!showConfirmPassword)} />
           </div>
 
-          {/* Designation */}
-          <select
-            value={designation}
-            onChange={(e) => setDesignation(e.target.value)}
-            className={`w-full border px-3 py-2 rounded ${
-              !designation ? "text-gray-400" : "text-gray-800"
-            }`}
-          >
+          <select value={designation} onChange={(e) => setDesignation(e.target.value)}
+            className={`w-full border px-3 py-2 rounded ${!designation ? "text-gray-400" : "text-gray-800"}`}>
             <option value="">Select Designation *</option>
             <option value="student">Student</option>
             <option value="professor">Professor</option>
             <option value="other">Other</option>
           </select>
 
-          {/* Profession - only for other */}
           {designation === "other" && (
-            <input
-              value={profession}
-              onChange={(e) => setProfession(e.target.value)}
-              placeholder="Profession *"
-              className="w-full border px-3 py-2 rounded"
-            />
+            <input value={profession} onChange={(e) => setProfession(e.target.value)}
+              placeholder="Profession *" className="w-full border px-3 py-2 rounded" />
           )}
 
-          {/* Institute - for student/professor */}
           {(designation === "student" || designation === "professor") && (
-            <input
-              value={institute}
-              onChange={(e) => setInstitute(e.target.value)}
-              placeholder="School / College Name *"
-              className="w-full border px-3 py-2 rounded"
-            />
+            <input value={institute} onChange={(e) => setInstitute(e.target.value)}
+              placeholder="School / College Name *" className="w-full border px-3 py-2 rounded" />
           )}
 
-          <button
-            disabled={loading}
-            className="w-full bg-blue-700 text-white py-2 rounded font-semibold hover:bg-blue-800 disabled:opacity-60"
-          >
+          <button disabled={loading}
+            className="w-full bg-blue-700 text-white py-2 rounded font-semibold hover:bg-blue-800 disabled:opacity-60">
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
