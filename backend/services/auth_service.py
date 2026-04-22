@@ -1,33 +1,38 @@
 import os
+import requests
 import threading
-import smtplib
-from email.mime.text import MIMEText
 import jwt
 import datetime
 from datetime import timezone
 from extensions import mongo
 from werkzeug.security import generate_password_hash, check_password_hash
-from repositories.auth_respository import (
-    get_user_by_email,
-    add_user
-)
+from repositories.auth_respository import get_user_by_email, add_user
 from services.otp_service import generate_otp
 
 SECRET_KEY = os.environ.get("JWT_SECRET", "exam_prep_secret")
 
+
 def send_otp_email(email, otp):
-    sender = os.environ.get("MAIL_USERNAME")
-    password = os.environ.get("MAIL_PASSWORD")
+    def send():
+        try:
+            res = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {os.environ.get('RESEND_API_KEY')}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "from": "onboarding@resend.dev",
+                    "to": [email],
+                    "subject": "Your OTP Verification Code",
+                    "text": f"Your OTP is: {otp}\nValid for 1 minute."
+                }
+            )
+            print(f"[EMAIL] {email} -> {otp} | Status: {res.status_code} | {res.text}")
+        except Exception as e:
+            print(f"[EMAIL ERROR] {e}")
+    threading.Thread(target=send).start()
 
-    msg = MIMEText(f"Your OTP is: {otp}\nValid for 1 minute.")
-    msg["Subject"] = "Your OTP Verification Code"
-    msg["From"] = sender
-    msg["To"] = email
-
-    with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
-        server.starttls()
-        server.login(sender, password)
-        server.sendmail(sender, email, msg.as_string())
 
 def complete_registration(
     name, email, password, otp,
@@ -54,6 +59,7 @@ def complete_registration(
         }}
     )
     return user, None
+
 
 def login_user(email, password):
     user = get_user_by_email(email)
@@ -85,6 +91,7 @@ def login_user(email, password):
     )
     return user, token
 
+
 def forgot_password(email):
     user = get_user_by_email(email)
     if not user:
@@ -92,6 +99,7 @@ def forgot_password(email):
     otp = generate_otp(email, digits=4, purpose="forgot", force_new=True)
     send_otp_email(email, otp)
     return True, "OTP sent successfully"
+
 
 def update_password(email, new_password):
     user = get_user_by_email(email)
@@ -107,23 +115,3 @@ def update_password(email, new_password):
         }
     )
     return True, "Password updated successfully"
-
-
-def send_otp_email(email, otp):
-    def send():
-        try:
-            with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
-                server.starttls()
-                server.login(
-                    os.environ.get("MAIL_USERNAME"),
-                    os.environ.get("MAIL_PASSWORD")
-                )
-                server.sendmail(
-                    os.environ.get("MAIL_USERNAME"),
-                    email,
-                    f"Subject: Your OTP\n\nYour OTP is: {otp}\nValid for 1 minute."
-                )
-        except Exception as e:
-            print(f"[EMAIL ERROR] {e}")
-    
-    threading.Thread(target=send).start()
