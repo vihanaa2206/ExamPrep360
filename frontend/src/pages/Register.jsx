@@ -50,8 +50,9 @@ const Register = () => {
         EMAILJS_KEY
       );
       setShowOtpBox(true);
-    } catch {
-      setError("Failed to send OTP");
+    } catch (err) {
+      console.error("EmailJS error:", err);
+      setError("Failed to send OTP: " + JSON.stringify(err));
     } finally {
       setOtpLoading(false);
     }
