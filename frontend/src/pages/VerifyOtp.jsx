@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
+import emailjs from "@emailjs/browser";
+
+const EMAILJS_SERVICE  = "service_jc1snng";
+const EMAILJS_TEMPLATE = "e7h4mub";
+const EMAILJS_KEY      = "PLmVSfeYnfj4hcrns";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -32,20 +37,17 @@ const VerifyOtp = () => {
   const handleVerify = async () => {
     const enteredOtp = otp.join("");
     const email = localStorage.getItem("resetEmail");
-    if (!email) { setError("Session expired. Please try again."); return; }
-    if (enteredOtp.length !== 4) { setError("Please enter complete OTP"); return; }
-    setError("");
-    setLoading(true);
+    if (!email) { setError("Session expired."); return; }
+    if (enteredOtp.length !== 4) { setError("Enter complete OTP"); return; }
+    setError(""); setLoading(true);
     try {
       await API.post("/auth/verify-otp", { email, otp: enteredOtp });
       navigate("/reset-password");
     } catch (err) {
-      setError(err.response?.data?.error || "Invalid or expired OTP");
+      setError(err.response?.data?.error || "Invalid OTP");
       setOtp(["", "", "", ""]);
       inputRefs.current[0].focus();
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleResend = async () => {
@@ -53,10 +55,11 @@ const VerifyOtp = () => {
     const email = localStorage.getItem("resetEmail");
     if (!email) { alert("Session expired."); return; }
     try {
-      await API.post("/auth/resend-forgot-otp", { email });
-      alert("OTP resent successfully");
-      setTimer(60);
-      setCanResend(false);
+      const res = await API.post("/auth/resend-forgot-otp", { email });
+      const newOtp = res.data.otp;
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, { to_email: email, otp: newOtp }, EMAILJS_KEY);
+      alert("OTP resent!");
+      setTimer(60); setCanResend(false);
       const interval = setInterval(() => {
         setTimer((prev) => {
           if (prev <= 1) { clearInterval(interval); setCanResend(true); return 0; }
@@ -65,9 +68,7 @@ const VerifyOtp = () => {
       }, 1000);
       setOtp(["", "", "", ""]);
       inputRefs.current[0].focus();
-    } catch {
-      alert("Unable to resend OTP");
-    }
+    } catch { alert("Unable to resend OTP"); }
   };
 
   return (
@@ -92,13 +93,11 @@ const VerifyOtp = () => {
           )}
         </p>
         <button onClick={handleVerify} disabled={loading}
-          className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-semibold transition disabled:opacity-50">
+          className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-semibold disabled:opacity-50">
           {loading ? "Verifying..." : "Verify"}
         </button>
         <button onClick={() => navigate("/login")}
-          className="w-full mt-3 border border-gray-300 py-3 rounded-xl font-medium">
-          Cancel
-        </button>
+          className="w-full mt-3 border border-gray-300 py-3 rounded-xl font-medium">Cancel</button>
       </div>
     </div>
   );

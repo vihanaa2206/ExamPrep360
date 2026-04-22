@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
+import emailjs from "@emailjs/browser";
+
+const EMAILJS_SERVICE  = "service_jc1snng";
+const EMAILJS_TEMPLATE = "e7h4mub";
+const EMAILJS_KEY      = "PLmVSfeYnfj4hcrns";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -9,7 +14,9 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/auth/forgot-password", { email });
+      const res = await API.post("/auth/forgot-password", { email });
+      const otp = res.data.otp;
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, { to_email: email, otp }, EMAILJS_KEY);
       localStorage.setItem("resetEmail", email);
       navigate("/verify-otp");
     } catch {
@@ -32,7 +39,7 @@ export default function ForgotPassword() {
               onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
-            Send Reset Link
+            Send OTP
           </button>
         </form>
         <p className="text-sm text-center mt-6">
