@@ -46,7 +46,7 @@ const Register = () => {
       const generatedOtp = res.data.otp;
       await emailjs.send(
         EMAILJS_SERVICE, EMAILJS_TEMPLATE,
-        { to_email: email, otp: generatedOtp },
+        { to_email: email, passcode: generatedOtp, time: "1 minute" },
         EMAILJS_KEY
       );
       setShowOtpBox(true);
