@@ -3,9 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import emailjs from "@emailjs/browser";
 
-const EMAILJS_SERVICE = "service_jc1sng";
-const EMAILJS_TEMPLATE = "e7h4mub";
-const EMAILJS_KEY      = "PLmVSfeYnfj4hcrns";
+const EMAILJS_SERVICE  = import.meta.env.VITE_EMAILJS_SERVICE;
+const EMAILJS_TEMPLATE = import.meta.env.VITE_EMAILJS_TEMPLATE;
+const EMAILJS_KEY      = import.meta.env.VITE_EMAILJS_KEY;
 
 const Register = () => {
   const navigate = useNavigate();
