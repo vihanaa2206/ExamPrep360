@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import emailjs from "@emailjs/browser";
 
-const EMAILJS_SERVICE  = "service_jc1snng";
+const EMAILJS_SERVICE = "service_jc1sng";
 const EMAILJS_TEMPLATE = "e7h4mub";
 const EMAILJS_KEY      = "PLmVSfeYnfj4hcrns";
 
