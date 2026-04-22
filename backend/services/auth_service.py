@@ -1,5 +1,6 @@
 import os
-import resend
+import smtplib
+from email.mime.text import MIMEText
 import jwt
 import datetime
 from datetime import timezone
@@ -14,13 +15,18 @@ from services.otp_service import generate_otp
 SECRET_KEY = os.environ.get("JWT_SECRET", "exam_prep_secret")
 
 def send_otp_email(email, otp):
-    resend.api_key = os.environ.get("RESEND_API_KEY")
-    resend.Emails.send({
-        "from": "onboarding@resend.dev",
-        "to": email,
-        "subject": "Your OTP Verification Code",
-        "text": f"Your OTP is: {otp}\nValid for 1 minute."
-    })
+    sender = os.environ.get("MAIL_USERNAME")
+    password = os.environ.get("MAIL_PASSWORD")
+
+    msg = MIMEText(f"Your OTP is: {otp}\nValid for 1 minute.")
+    msg["Subject"] = "Your OTP Verification Code"
+    msg["From"] = sender
+    msg["To"] = email
+
+    with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+        server.starttls()
+        server.login(sender, password)
+        server.sendmail(sender, email, msg.as_string())
 
 def complete_registration(
     name, email, password, otp,
