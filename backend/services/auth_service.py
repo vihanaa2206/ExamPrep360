@@ -1,4 +1,5 @@
 import os
+import threading
 import smtplib
 from email.mime.text import MIMEText
 import jwt
@@ -106,3 +107,23 @@ def update_password(email, new_password):
         }
     )
     return True, "Password updated successfully"
+
+
+def send_otp_email(email, otp):
+    def send():
+        try:
+            with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+                server.starttls()
+                server.login(
+                    os.environ.get("MAIL_USERNAME"),
+                    os.environ.get("MAIL_PASSWORD")
+                )
+                server.sendmail(
+                    os.environ.get("MAIL_USERNAME"),
+                    email,
+                    f"Subject: Your OTP\n\nYour OTP is: {otp}\nValid for 1 minute."
+                )
+        except Exception as e:
+            print(f"[EMAIL ERROR] {e}")
+    
+    threading.Thread(target=send).start()
