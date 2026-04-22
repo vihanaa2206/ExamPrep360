@@ -9,7 +9,6 @@ from services.auth_service import (
     send_otp_email,
     SECRET_KEY,
 )
-
 from services.otp_service import generate_otp, verify_otp
 
 auth_bp = Blueprint("auth_bp", __name__)
@@ -20,14 +19,10 @@ auth_bp = Blueprint("auth_bp", __name__)
 def send_email_otp():
     data = request.get_json()
     email = data.get("email")
-
     if not email:
         return jsonify({"error": "Email required"}), 400
-
     otp = generate_otp(email)
-    send_otp_email(email, otp)
-
-    return jsonify({"message": "OTP sent"}), 200
+    return jsonify({"message": "OTP generated", "otp": otp}), 200
 
 
 # ================= EMAIL VERIFY OTP =================
@@ -145,16 +140,10 @@ def login():
 def forgot_password_route():
     data = request.get_json()
     email = data.get("email")
-
     if not email:
         return jsonify({"error": "Email required"}), 400
-
-    # Normal OTP generate
     otp = generate_otp(email, digits=4, purpose="forgot")
-
-    send_otp_email(email, otp)
-
-    return jsonify({"message": "OTP sent"}), 200
+    return jsonify({"message": "OTP generated", "otp": otp}), 200
 
 
 # ================= VERIFY OTP (FORGOT) =================
@@ -201,16 +190,10 @@ def update_password_route():
 def resend_forgot_otp():
     data = request.get_json()
     email = data.get("email")
-
     if not email:
         return jsonify({"error": "Email required"}), 400
-
-    # 🔥 FORCE NEW OTP
     otp = generate_otp(email, digits=4, purpose="forgot", force_new=True)
-
-    send_otp_email(email, otp)
-
-    return jsonify({"message": "OTP resent successfully"}), 200
+    return jsonify({"message": "OTP resent", "otp": otp}), 200
 
 
 # ================= ROLE CHECK =================
