@@ -12,16 +12,15 @@ const ResetPassword = () => {
       alert("Passwords do not match");
       return;
     }
-
     const email = localStorage.getItem("resetEmail");
     if (!email) {
       alert("Session expired. Please try again.");
       navigate("/login");
       return;
     }
-
     await API.post("/auth/reset-password", { email, password });
     localStorage.removeItem("resetEmail");
+    localStorage.removeItem("token");
     navigate("/login");
   };
 

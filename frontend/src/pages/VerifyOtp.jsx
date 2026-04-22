@@ -51,25 +51,29 @@ const VerifyOtp = () => {
   };
 
   const handleResend = async () => {
-    if (!canResend) return;
-    const email = localStorage.getItem("resetEmail");
-    if (!email) { alert("Session expired."); return; }
-    try {
-      const res = await API.post("/auth/resend-forgot-otp", { email });
-      const newOtp = res.data.otp;
-      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, { to_email: email, otp: newOtp }, EMAILJS_KEY);
-      alert("OTP resent!");
-      setTimer(60); setCanResend(false);
-      const interval = setInterval(() => {
-        setTimer((prev) => {
-          if (prev <= 1) { clearInterval(interval); setCanResend(true); return 0; }
-          return prev - 1;
-        });
-      }, 1000);
-      setOtp(["", "", "", ""]);
-      inputRefs.current[0].focus();
-    } catch { alert("Unable to resend OTP"); }
-  };
+  if (!canResend) return;
+  const email = localStorage.getItem("resetEmail");
+  if (!email) { alert("Session expired."); return; }
+  try {
+    const res = await API.post("/auth/resend-forgot-otp", { email });
+    const newOtp = res.data.otp;
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      to_email: email,
+      passcode: newOtp,
+      time: "10 minutes"
+    }, EMAILJS_KEY);
+    alert("OTP resent!");
+    setTimer(60); setCanResend(false);
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) { clearInterval(interval); setCanResend(true); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    setOtp(["", "", "", ""]);
+    inputRefs.current[0].focus();
+  } catch { alert("Unable to resend OTP"); }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">

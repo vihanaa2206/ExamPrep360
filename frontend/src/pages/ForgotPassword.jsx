@@ -12,19 +12,22 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await API.post("/auth/forgot-password", { email });
-      const otp = res.data.otp;
-      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, { to_email: email, otp }, EMAILJS_KEY);
-      localStorage.setItem("resetEmail", email);
-      navigate("/verify-otp");
-    } catch {
-      localStorage.setItem("resetEmail", email);
-      navigate("/verify-otp");
-    }
-  };
-
+  e.preventDefault();
+  try {
+    const res = await API.post("/auth/forgot-password", { email });
+    const otp = res.data.otp;
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      to_email: email,
+      passcode: otp,
+      time: "10 minutes"
+    }, EMAILJS_KEY);
+    localStorage.setItem("resetEmail", email);
+    navigate("/verify-otp");
+  } catch {
+    localStorage.setItem("resetEmail", email);
+    navigate("/verify-otp");
+  }
+};
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-md p-6">
