@@ -7,18 +7,6 @@ from werkzeug.utils import secure_filename
 
 pyq_bp = Blueprint("pyq_bp", __name__)
 
-CATEGORY_MAP = {
-    "COMEDK UGET":"Engineering","Jee Advanced":"Engineering","Jee Main":"Engineering",
-    "Jee Main With Solutions":"Engineering","KCET":"Engineering","MHT CET":"Engineering",
-    "SRMJEEE":"Engineering","VITEEE":"Engineering","WBJEE":"Engineering",
-    "NEET UG":"Medical","NEET PG":"Medical","JIPMER":"Medical","AFMC":"Medical",
-    "GATE CS":"Computer Science","NIMCET":"Computer Science","CUET PG":"Computer Science",
-    "IIT JAM":"Computer Science","TANCET":"Computer Science",
-    "CLAT":"Law","AILET":"Law","DU LLB":"Law","AP LAWCET":"Law",
-    "CAT":"Management","CMAT":"Management","MAT":"Management","NMAT":"Management","XAT":"Management",
-    "IBPS PO":"Government","RRB NTPC":"Government","SSC CGL":"Government","UPSC CSE":"Government",
-}
-
 def init_cloudinary():
     cloudinary.config(
         cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
@@ -54,10 +42,22 @@ def get_pyq_files(exam_name):
         )
         files = []
         for r in result.get("resources", []):
-            name = r["public_id"].split("/")[-1] + ".pdf"
+            raw_name = r["public_id"].split("/")[-1]
+
+            # Skip internal init file
+            if raw_name in [".folder_init", "folder_init", ".folder-init"]:
+                continue
+
+            # Clean name — remove Cloudinary auto-appended suffix like "_abc123"
+            # Keep original filename as-is, just add .pdf
+            display_name = raw_name + ".pdf"
+
+            # Force browser to open PDF inline using Google Docs viewer URL
+            secure_url = r["secure_url"]
+
             files.append({
-                "name": name,
-                "path": r["secure_url"],
+                "name": display_name,
+                "path": secure_url,
                 "size_kb": round(r.get("bytes", 0) / 1024),
                 "public_id": r["public_id"],
             })
@@ -81,12 +81,15 @@ def upload_pyq():
     uploaded = []
     for f in files:
         if f.filename.lower().endswith(".pdf"):
-            filename = secure_filename(f.filename).replace(".pdf", "")
+            # Use original filename without extension as public_id
+            filename = secure_filename(f.filename).replace(".pdf", "").replace(".PDF", "")
             result = cloudinary.uploader.upload(
                 f,
                 resource_type="raw",
                 folder=f"pyqs/{exam_name}",
                 public_id=filename,
+                use_filename=True,
+                unique_filename=False,   # <-- prevents Cloudinary from appending random suffix
             )
             uploaded.append(f.filename)
 
