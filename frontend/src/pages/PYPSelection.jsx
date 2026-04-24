@@ -143,9 +143,9 @@ const PYPSelection = () => {
                   {/* Action buttons */}
                   <div className="flex gap-3 w-full md:w-auto">
 
-                    {/* VIEW — opens in Google Docs viewer (no download, proper PDF render) */}
+                    {/* VIEW — direct URL, browser renders PDF natively */}
                     <a
-                      href={viewerUrl(file.path)}
+                      href={file.path}
                       target="_blank"
                       rel="noreferrer"
                       className="flex-1 md:flex-none flex items-center justify-center gap-2

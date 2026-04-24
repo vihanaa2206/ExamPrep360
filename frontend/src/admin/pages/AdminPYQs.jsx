@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Upload, Trash2, Eye, FolderPlus, Search,
-  FileText, RefreshCw, X, FolderOpen, Download,
+  FileText, RefreshCw, FolderOpen, Download,
   CheckCircle, AlertCircle,
 } from "lucide-react";
 
@@ -10,10 +10,12 @@ const API = "https://examprep360-production.up.railway.app/api";
 
 const CATEGORY_MAP = {
   "COMEDK UGET":"Engineering","Jee Advanced":"Engineering","Jee Main":"Engineering",
+  "JEE MAIN":"Engineering","JEE ADVANCED":"Engineering",
   "Jee Main With Solutions":"Engineering","KCET":"Engineering","MHT CET":"Engineering",
-  "SRMJEEE":"Engineering","VITEEE":"Engineering","WBJEE":"Engineering",
+  "SRMJEEE":"Engineering","VITEEE":"Engineering","WBJEE":"Engineering","BITSAT":"Engineering",
   "NEET UG":"Medical","NEET PG":"Medical","JIPMER":"Medical","AFMC":"Medical",
   "GATE CS":"Computer Science","NIMCET":"Computer Science","CUET PG":"Computer Science",
+  "cuetpg":"Computer Science","CUETPG":"Computer Science",
   "IIT JAM":"Computer Science","TANCET":"Computer Science",
   "CLAT":"Law","AILET":"Law","DU LLB":"Law","AP LAWCET":"Law",
   "CAT":"Management","CMAT":"Management","MAT":"Management","NMAT":"Management","XAT":"Management",
@@ -24,6 +26,16 @@ const CAT_COLORS = {
   Engineering:"bg-blue-100 text-blue-700", Medical:"bg-green-100 text-green-700",
   Management:"bg-purple-100 text-purple-700", "Computer Science":"bg-cyan-100 text-cyan-700",
   Law:"bg-amber-100 text-amber-700", Government:"bg-red-100 text-red-700",
+  Other:"bg-gray-100 text-gray-600",
+};
+
+// Case-insensitive category lookup
+const getCategory = (exam) => {
+  if (CATEGORY_MAP[exam]) return CATEGORY_MAP[exam];
+  const key = Object.keys(CATEGORY_MAP).find(
+    k => k.toLowerCase() === exam.toLowerCase()
+  );
+  return key ? CATEGORY_MAP[key] : "Other";
 };
 
 export default function AdminPYQs() {
@@ -40,8 +52,8 @@ export default function AdminPYQs() {
   const fileRef = useRef(null);
 
   const showToast = (msg, type="success") => {
-    setToast({msg,type});
-    setTimeout(()=>setToast(null),3500);
+    setToast({msg, type});
+    setTimeout(()=>setToast(null), 3500);
   };
 
   const fetchExams = () => {
@@ -53,20 +65,20 @@ export default function AdminPYQs() {
     setLoading(true);
     fetch(`${API}/pyq/files/${encodeURIComponent(exam)}`)
       .then(r=>r.json())
-      .then(data=>{setFiles(data);setLoading(false);})
+      .then(data => { setFiles(data); setLoading(false); })
       .catch(()=>setLoading(false));
   };
 
-  useEffect(()=>{fetchExams();},[]);
+  useEffect(()=>{ fetchExams(); }, []);
 
   const handleUpload = async (selectedFiles) => {
-    if(!selectedFiles.length||!selExam) return;
+    if(!selectedFiles.length || !selExam) return;
     setUploading(true);
     const formData = new FormData();
-    selectedFiles.forEach(f=>formData.append("files",f));
-    formData.append("exam_name",selExam);
+    selectedFiles.forEach(f=>formData.append("files", f));
+    formData.append("exam_name", selExam);
     try {
-      const res = await fetch(`${API}/pyq/upload`,{method:"POST",body:formData});
+      const res = await fetch(`${API}/pyq/upload`, {method:"POST", body:formData});
       if(res.ok){
         const data = await res.json();
         showToast(`${data.files?.length||0} file(s) uploaded! ✅`);
@@ -78,7 +90,7 @@ export default function AdminPYQs() {
 
   const handleFileInput = (e) => {
     handleUpload(Array.from(e.target.files));
-    e.target.value="";
+    e.target.value = "";
   };
 
   const handleDrop = (e) => {
@@ -89,23 +101,23 @@ export default function AdminPYQs() {
   };
 
   const handleDeleteFile = async (file) => {
-  if(!window.confirm(`Delete "${file.name}"?`)) return;
-  try {
-    const res = await fetch(`${API}/pyq/delete`,{
-      method:"DELETE", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({public_id: file.public_id}),
-    });
-    if(res.ok){showToast("File deleted!"); fetchFiles(selExam);}
-    else showToast("Delete failed","error");
-  } catch { showToast("Network error","error"); }
-};
+    if(!window.confirm(`Delete "${file.name}"?`)) return;
+    try {
+      const res = await fetch(`${API}/pyq/delete`, {
+        method:"DELETE", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({public_id: file.public_id}),
+      });
+      if(res.ok){ showToast("File deleted!"); fetchFiles(selExam); }
+      else showToast("Delete failed","error");
+    } catch { showToast("Network error","error"); }
+  };
 
   const handleCreateFolder = async () => {
     if(!newFolder.trim()) return showToast("Enter folder name","error");
     try {
-      const res = await fetch(`${API}/pyq/create-folder`,{
+      const res = await fetch(`${API}/pyq/create-folder`, {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({exam_name:newFolder.trim()}),
+        body: JSON.stringify({exam_name: newFolder.trim()}),
       });
       if(res.ok){
         showToast(`Folder "${newFolder}" created! ✅`);
@@ -119,11 +131,11 @@ export default function AdminPYQs() {
   };
 
   const handleDeleteFolder = async () => {
-    if(!window.confirm(`Delete "${selExam}" folder and ALL its PDFs? This cannot be undone!`)) return;
+    if(!window.confirm(`Delete "${selExam}" folder and ALL its PDFs? Cannot be undone!`)) return;
     try {
-      const res = await fetch(`${API}/pyq/delete-folder`,{
+      const res = await fetch(`${API}/pyq/delete-folder`, {
         method:"DELETE", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({exam_name:selExam}),
+        body: JSON.stringify({exam_name: selExam}),
       });
       if(res.ok){
         showToast(`"${selExam}" deleted!`);
@@ -132,13 +144,16 @@ export default function AdminPYQs() {
     } catch { showToast("Network error","error"); }
   };
 
-  const filtered = files.filter(f=>f.name.toLowerCase().includes(search.toLowerCase()));
+  // Filter out folder_init and apply search
+  const filtered = files
+    .filter(f => !f.name.toLowerCase().includes("folder_init"))
+    .filter(f => f.name.toLowerCase().includes(search.toLowerCase()));
 
   // Group exams by category
   const grouped = {};
-  exams.forEach(exam=>{
-    const cat = CATEGORY_MAP[exam]||"Other";
-    if(!grouped[cat]) grouped[cat]=[];
+  exams.forEach(exam => {
+    const cat = getCategory(exam);
+    if(!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(exam);
   });
 
@@ -148,8 +163,8 @@ export default function AdminPYQs() {
       {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-2
-          ${toast.type==="error"?"bg-red-500 text-white":"bg-green-500 text-white"}`}>
-          {toast.type==="error"?<AlertCircle className="w-4 h-4"/>:<CheckCircle className="w-4 h-4"/>}
+          ${toast.type==="error" ? "bg-red-500 text-white" : "bg-green-500 text-white"}`}>
+          {toast.type==="error" ? <AlertCircle className="w-4 h-4"/> : <CheckCircle className="w-4 h-4"/>}
           {toast.msg}
         </div>
       )}
@@ -206,25 +221,25 @@ export default function AdminPYQs() {
           </div>
 
           <div className="overflow-y-auto max-h-[520px]">
-            {Object.entries(grouped).map(([cat,catExams])=>(
+            {Object.entries(grouped).map(([cat, catExams]) => (
               <div key={cat}>
                 <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${CAT_COLORS[cat]||"bg-gray-100 text-gray-600"}`}>
                     {cat}
                   </span>
                 </div>
-                {catExams.map(exam=>(
+                {catExams.map(exam => (
                   <button key={exam}
-                    onClick={()=>{setSelExam(exam);fetchFiles(exam);setSearch("");}}
+                    onClick={()=>{ setSelExam(exam); fetchFiles(exam); setSearch(""); }}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-left transition border-b border-gray-50
-                      ${selExam===exam?"bg-blue-50 text-blue-700":"hover:bg-gray-50 text-gray-700"}`}>
-                    <FolderOpen className={`w-4 h-4 flex-shrink-0 ${selExam===exam?"text-blue-500":"text-yellow-500"}`}/>
+                      ${selExam===exam ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50 text-gray-700"}`}>
+                    <FolderOpen className={`w-4 h-4 flex-shrink-0 ${selExam===exam ? "text-blue-500" : "text-yellow-500"}`}/>
                     <span className="text-sm font-medium truncate">{exam}</span>
                   </button>
                 ))}
               </div>
             ))}
-            {exams.length===0&&(
+            {exams.length===0 && (
               <p className="text-center text-gray-400 text-sm py-10">No folders yet</p>
             )}
           </div>
@@ -245,7 +260,7 @@ export default function AdminPYQs() {
                 <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
                   <div>
                     <h3 className="font-black text-gray-900">{selExam}</h3>
-                    <p className="text-xs text-gray-400">{files.length} files</p>
+                    <p className="text-xs text-gray-400">{filtered.length} files</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative">
@@ -273,9 +288,7 @@ export default function AdminPYQs() {
                   onDrop={handleDrop}
                   className={`border-2 border-dashed rounded-xl p-4 flex items-center justify-center gap-3
                              cursor-pointer transition
-                    ${dragOver
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-blue-200 hover:border-blue-400 hover:bg-blue-50"}`}>
+                    ${dragOver ? "border-blue-500 bg-blue-50" : "border-blue-200 hover:border-blue-400 hover:bg-blue-50"}`}>
                   {uploading
                     ? <RefreshCw className="w-5 h-5 text-blue-500 animate-spin"/>
                     : <Upload className="w-5 h-5 text-blue-500"/>}
@@ -303,24 +316,26 @@ export default function AdminPYQs() {
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100 max-h-[370px] overflow-y-auto">
-                  {filtered.map((file,i)=>(
+                  {filtered.map((file, i) => (
                     <div key={i} className="px-5 py-3.5 flex items-center gap-3 hover:bg-gray-50 transition group">
                       <div className="w-9 h-9 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
                         <FileText className="w-4 h-4 text-red-500"/>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900 truncate">
-                          {file.name.replace(/\.pdf$/i,"")}
+                          {file.name.replace(/\.pdf$/i, "")}
                         </p>
                         <p className="text-xs text-gray-400">{file.size_kb} KB · PDF</p>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                        {/* View — direct URL, browser renders PDF */}
                         <a href={file.path} target="_blank" rel="noreferrer"
                           className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
                           title="View">
                           <Eye className="w-4 h-4"/>
                         </a>
-                        <a href={file.path} download={file.name}
+                        {/* Download */}
+                        <a href={file.path} download={file.name} target="_blank" rel="noreferrer"
                           className="p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition"
                           title="Download">
                           <Download className="w-4 h-4"/>
