@@ -6,9 +6,16 @@ import collegeIITDelhi  from "../assets/college-iit-delhi.jpg";
 import collegeIITBombay from "../assets/college-iit-bombay.jpg";
 import collegeAIIMS     from "../assets/college-aiims.jpg";
 import collegeIIM       from "../assets/college-iim.jpg";
-import bitcblog1        from "../assets/bitcblog1.jpg";
-import nitTrichyImg     from "../assets/download.jpg";
-import collegeVIT       from "../assets/vit-vellore.jpg";
+import bitcblog1 from "../assets/bitcblog1.jpg";
+import nitTrichyImg from "../assets/download.jpg";
+import collegejipmer from "../assets/jipmer-puducherry.jpg";
+import collegeIIMBangalore from "../assets/iim-bangalore.jpg";
+import collegeNLSIU from "../assets/nlsiu-bangalore.jpg";
+import collegeNLU from "../assets/nlu-delhi.jpg";
+import collegeIISC from "../assets/iisc-bangalore.jpg";
+import collegeIIITHyderabad from "../assets/iiit-hyderabad.jpg";
+import collegeLbsna from "../assets/college-lbsnaa-mussoorie.jpg";
+import collegeVIT from "../assets/vit-vellore.jpg";
 
 const LOCAL_IMAGES = {
   "iit-delhi":     collegeIITDelhi,
@@ -18,6 +25,13 @@ const LOCAL_IMAGES = {
   "bits-pilani":   bitcblog1,
   "nit-trichy":    nitTrichyImg,
   "vit-vellore":   collegeVIT,
+  "jipmer-puducherry": collegejipmer,
+  "iim-bangalore": collegeIIMBangalore,
+  "nlsiu-bangalore": collegeNLSIU,
+  "nlu-delhi": collegeNLU,
+  "iisc-bangalore": collegeIISC,
+  "iiit-hyderabad": collegeIIITHyderabad,
+  "college-lbsnaa-mussoorie": collegeLbsna,
 };
 
 const categoryColor = {
