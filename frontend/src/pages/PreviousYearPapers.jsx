@@ -6,37 +6,51 @@ import SidebarFilters from '../components/SidebarFilters';
 const API = "https://examprep360-production.up.railway.app/api";
 
 const CATEGORY_MAP = {
-  "COMEDK UGET":        "Engineering",
-  "Jee Advanced":       "Engineering",
-  "Jee Main":           "Engineering",
+  "COMEDK UGET":             "Engineering",
+  "Jee Advanced":            "Engineering",
+  "JEE ADVANCED":            "Engineering",
+  "Jee Main":                "Engineering",
+  "JEE MAIN":                "Engineering",
   "Jee Main With Solutions": "Engineering",
-  "KCET":               "Engineering",
-  "MHT CET":            "Engineering",
-  "SRMJEEE":            "Engineering",
-  "VITEEE":             "Engineering",
-  "WBJEE":              "Engineering",
-  "NEET UG":            "Medical",
-  "NEET PG":            "Medical",
-  "JIPMER":             "Medical",
-  "AFMC":               "Medical",
-  "GATE CS":            "Computer Science",
-  "NIMCET":             "Computer Science",
-  "CUET PG":            "Computer Science",
-  "IIT JAM":            "Computer Science",
-  "TANCET":             "Computer Science",
-  "CLAT":               "Law",
-  "AILET":              "Law",
-  "DU LLB":             "Law",
-  "AP LAWCET":          "Law",
-  "CAT":                "Management",
-  "CMAT":               "Management",
-  "MAT":                "Management",
-  "NMAT":               "Management",
-  "XAT":                "Management",
-  "IBPS PO":            "Government Exams",
-  "RRB NTPC":           "Government Exams",
-  "SSC CGL":            "Government Exams",
-  "UPSC CSE":           "Government Exams",
+  "KCET":                    "Engineering",
+  "MHT CET":                 "Engineering",
+  "SRMJEEE":                 "Engineering",
+  "VITEEE":                  "Engineering",
+  "WBJEE":                   "Engineering",
+  "BITSAT":                  "Engineering",
+  "NEET UG":                 "Medical",
+  "NEET PG":                 "Medical",
+  "JIPMER":                  "Medical",
+  "AFMC":                    "Medical",
+  "GATE CS":                 "Computer Science",
+  "NIMCET":                  "Computer Science",
+  "CUET PG":                 "Computer Science",
+  "cuetpg":                  "Computer Science",
+  "CUETPG":                  "Computer Science",
+  "IIT JAM":                 "Computer Science",
+  "TANCET":                  "Computer Science",
+  "CLAT":                    "Law",
+  "AILET":                   "Law",
+  "DU LLB":                  "Law",
+  "AP LAWCET":               "Law",
+  "CAT":                     "Management",
+  "CMAT":                    "Management",
+  "MAT":                     "Management",
+  "NMAT":                    "Management",
+  "XAT":                     "Management",
+  "IBPS PO":                 "Government Exams",
+  "RRB NTPC":                "Government Exams",
+  "SSC CGL":                 "Government Exams",
+  "UPSC CSE":                "Government Exams",
+};
+
+// Case-insensitive category lookup
+const getCategory = (exam) => {
+  if (CATEGORY_MAP[exam]) return CATEGORY_MAP[exam];
+  const key = Object.keys(CATEGORY_MAP).find(
+    k => k.toLowerCase() === exam.toLowerCase()
+  );
+  return key ? CATEGORY_MAP[key] : "Other";
 };
 
 const PreviousYearPapers = () => {
@@ -54,7 +68,7 @@ const PreviousYearPapers = () => {
   }, []);
 
   const filtered = exams.filter(exam => {
-    const cat = CATEGORY_MAP[exam] || "Other";
+    const cat = getCategory(exam);
     const matchFilter = filter === "All" || cat === filter;
     const matchSearch = exam.toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
@@ -128,7 +142,7 @@ const PreviousYearPapers = () => {
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-1">{exam}</h3>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">
-                  {CATEGORY_MAP[exam] || "Other"}
+                  {getCategory(exam)}
                 </p>
                 <div className="flex items-center text-blue-600 font-bold text-sm">
                   View All Papers

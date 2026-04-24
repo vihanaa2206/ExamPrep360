@@ -24,7 +24,12 @@ const PYPSelection = () => {
     f.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Clean display name — remove .pdf extension for display
   const displayName = (filename) => filename.replace(/\.pdf$/i, "");
+
+  // Google Docs viewer URL for inline PDF viewing
+  const viewerUrl = (url) =>
+    `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=false`;
 
   return (
     <div className="p-6 min-h-screen" style={{ background: "var(--bg-primary, #0f172a)" }}>
@@ -91,9 +96,7 @@ const PYPSelection = () => {
             <AlertCircle className="w-12 h-12 mx-auto mb-3" style={{ color: "#475569" }} />
             <p className="text-xl font-bold mb-2" style={{ color: "var(--text-primary, #f1f5f9)" }}>No Papers Found</p>
             <p className="text-sm" style={{ color: "#64748b" }}>
-              {files.length === 0
-                ? `No PDF files found in public/pdfs/${decodedExam}/ folder`
-                : "No papers match your search"}
+              {files.length === 0 ? "No papers uploaded yet for this exam" : "No papers match your search"}
             </p>
           </div>
         ) : (
@@ -123,7 +126,8 @@ const PYPSelection = () => {
 
                   {/* File info */}
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.15)" }}>
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: "rgba(239,68,68,0.15)" }}>
                       <FileText className="w-6 h-6" style={{ color: "#ef4444" }} />
                     </div>
                     <div>
@@ -138,9 +142,10 @@ const PYPSelection = () => {
 
                   {/* Action buttons */}
                   <div className="flex gap-3 w-full md:w-auto">
-                    {/* VIEW */}
+
+                    {/* VIEW — opens in Google Docs viewer (no download, proper PDF render) */}
                     <a
-                      href={file.path}
+                      href={viewerUrl(file.path)}
                       target="_blank"
                       rel="noreferrer"
                       className="flex-1 md:flex-none flex items-center justify-center gap-2
@@ -152,10 +157,12 @@ const PYPSelection = () => {
                       <Eye className="w-4 h-4" /> View
                     </a>
 
-                    {/* DOWNLOAD */}
+                    {/* DOWNLOAD — direct Cloudinary URL, forces download */}
                     <a
                       href={file.path}
                       download={file.name}
+                      target="_blank"
+                      rel="noreferrer"
                       className="flex-1 md:flex-none flex items-center justify-center gap-2
                                  px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
                       style={{ background: "#4f46e5", color: "white", boxShadow: "0 4px 15px rgba(79,70,229,0.4)" }}
