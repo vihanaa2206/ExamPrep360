@@ -52,8 +52,10 @@ def get_pyq_files(exam_name):
             # Keep original filename as-is, just add .pdf
             display_name = raw_name + ".pdf"
 
-            # Force browser to open PDF inline using Google Docs viewer URL
-            secure_url = r["secure_url"]
+            # Force browser to render PDF inline (not download)
+            secure_url = r["secure_url"].replace(
+                "/raw/upload/", "/raw/upload/fl_attachment:false/"
+            )
 
             files.append({
                 "name": display_name,
