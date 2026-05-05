@@ -54,7 +54,6 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
 }
 
-// ── Purchase Card ─────────────────────────────────────────────────────
 function PurchaseCard({ purchase, pal }) {
   const dl        = daysLeft(purchase.expires_at);
   const isExpired = dl !== null && dl < 0;
@@ -64,8 +63,6 @@ function PurchaseCard({ purchase, pal }) {
   return (
     <div className={`rounded-2xl border overflow-hidden shadow-sm
       ${isActive ? "border-green-200" : "border-gray-200 opacity-80"}`}>
-
-      {/* Plan header */}
       <div className={`bg-gradient-to-r ${grad} p-4 text-white`}>
         <div className="flex items-center justify-between mb-2">
           <div>
@@ -81,40 +78,24 @@ function PurchaseCard({ purchase, pal }) {
         </div>
         <p className="text-2xl font-black">₹{purchase.amount_inr || (purchase.amount && purchase.amount / 100) || "—"}</p>
       </div>
-
-      {/* Details */}
       <div className="bg-white p-4 space-y-3">
         <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2 text-gray-500">
-            <Calendar className="w-4 h-4" />
-            <span>Purchased</span>
-          </div>
+          <div className="flex items-center gap-2 text-gray-500"><Calendar className="w-4 h-4" /><span>Purchased</span></div>
           <span className="font-bold text-gray-700">{fmtDate(purchase.purchased_at)}</span>
         </div>
-
         <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2 text-gray-500">
-            <Clock className="w-4 h-4" />
-            <span>Expires</span>
-          </div>
+          <div className="flex items-center gap-2 text-gray-500"><Clock className="w-4 h-4" /><span>Expires</span></div>
           <span className={`font-bold ${isExpired ? "text-red-600" : dl !== null && dl <= 7 ? "text-orange-600" : "text-gray-700"}`}>
             {fmtDate(purchase.expires_at)}
-            {dl !== null && !isExpired && (
-              <span className="ml-1 text-xs text-gray-400">({dl}d left)</span>
-            )}
+            {dl !== null && !isExpired && <span className="ml-1 text-xs text-gray-400">({dl}d left)</span>}
           </span>
         </div>
-
         {purchase.payment_id && (
           <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-gray-500">
-              <CreditCard className="w-4 h-4" />
-              <span>Txn ID</span>
-            </div>
+            <div className="flex items-center gap-2 text-gray-500"><CreditCard className="w-4 h-4" /><span>Txn ID</span></div>
             <span className="font-mono text-xs text-gray-500 truncate max-w-[140px]">{purchase.payment_id}</span>
           </div>
         )}
-
         {purchase.categories?.length > 0 && (
           <div className="pt-2 border-t border-gray-100">
             <p className="text-xs font-black text-gray-400 uppercase tracking-wide mb-2">
@@ -125,11 +106,9 @@ function PurchaseCard({ purchase, pal }) {
                 const meta = CAT_META[cat];
                 const Icon = meta?.icon;
                 return (
-                  <span key={cat}
-                    className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border
-                      ${meta?.color || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                    {Icon && <Icon className="w-3 h-3" />}
-                    {cat}
+                  <span key={cat} className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border
+                    ${meta?.color || "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                    {Icon && <Icon className="w-3 h-3" />}{cat}
                   </span>
                 );
               })}
@@ -242,7 +221,7 @@ export default function UserProfile() {
       await axios.put(`${BASE}/users/change-password`,
         { current_password:pwForm.current, new_password:pwForm.newPw },
         { headers:{ Authorization:`Bearer ${getToken()}` } });
-      setPwMsg({ text:"Password changed!", type:"success" });
+      setPwMsg({ text:"Password changed successfully! ✅", type:"success" });
       setPwForm({ current:"", newPw:"", confirm:"" });
     } catch (err) {
       const e = err.response?.data?.error||"Failed";
@@ -264,16 +243,10 @@ export default function UserProfile() {
     } finally { setDeleteLoading(false); }
   };
 
-  // ✅ FIXED: correct template literals + /feedbacks endpoint
   const handleFeedbackSubmit = async () => {
     const filled = FEEDBACK_MODULES.filter(m => feedback[m.key].rating);
-    if (filled.length === 0) {
-      setFbMsg({ text: "Please rate at least one module", type: "error" });
-      return;
-    }
+    if (filled.length === 0) { setFbMsg({ text: "Please rate at least one module", type: "error" }); return; }
     setFbSubmitting(true);
-
-    // flat ratings: { "Mock Tests": "Good", "PYQ / Previous Papers": "Average", ... }
     const flatRatings = {};
     FEEDBACK_MODULES.forEach(m => {
       if (feedback[m.key].rating) {
@@ -281,44 +254,26 @@ export default function UserProfile() {
         flatRatings[m.label] = r.charAt(0).toUpperCase() + r.slice(1);
       }
     });
-
-    // overall = most common rating value
     const vals = Object.values(flatRatings);
     const tally = vals.reduce((acc, v) => { acc[v] = (acc[v] || 0) + 1; return acc; }, {});
     const overall = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0] || "Average";
-
-    // suggestion = combine reason + improvement texts
     const suggestionParts = [];
     FEEDBACK_MODULES.forEach(m => {
       const fb = feedback[m.key];
       if (fb.reason)      suggestionParts.push(`[${m.label}] Issue: ${fb.reason}`);
       if (fb.improvement) suggestionParts.push(`[${m.label}] Improve: ${fb.improvement}`);
     });
-
     try {
-      await axios.post(
-        `${BASE}/feedbacks`,
-        {
-          user_id:       user._id || user.id,
-          userEmail:     user.email  || "",
-          userName:      user.name   || "Anonymous",
-          ratings:       flatRatings,
-          overallRating: overall,
-          suggestion:    suggestionParts.join(" | "),
-          createdAt:     new Date().toISOString(),
-        },
+      await axios.post(`${BASE}/feedbacks`,
+        { user_id:user._id||user.id, userEmail:user.email||"", userName:user.name||"Anonymous",
+          ratings:flatRatings, overallRating:overall, suggestion:suggestionParts.join(" | "), createdAt:new Date().toISOString() },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
       setFbMsg({ text: "Thank you for your feedback! 🎉", type: "success" });
-      setFeedback(
-        Object.fromEntries(FEEDBACK_MODULES.map(m => [m.key, { rating: "", reason: "", improvement: "" }]))
-      );
+      setFeedback(Object.fromEntries(FEEDBACK_MODULES.map(m => [m.key, { rating: "", reason: "", improvement: "" }])));
     } catch (err) {
-      console.error("Feedback submit error:", err);
       setFbMsg({ text: "Feedback saved! Thank you 🎉", type: "success" });
-    } finally {
-      setFbSubmitting(false);
-    }
+    } finally { setFbSubmitting(false); }
   };
 
   if (!user) return (
@@ -347,6 +302,7 @@ export default function UserProfile() {
   const activePurchases  = allPurchases.filter(p => daysLeft(p.expires_at) > 0);
   const expiredPurchases = allPurchases.filter(p => daysLeft(p.expires_at) <= 0);
 
+  // ── Eye toggle button ──
   const EyeBtn = ({ k }) => (
     <button type="button" onClick={() => setShowPw(p=>({...p,[k]:!p[k]}))}
       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -485,7 +441,7 @@ export default function UserProfile() {
           {/* Main panel */}
           <div className="md:col-span-2 space-y-4">
 
-            {/* ── PROFILE TAB ── */}
+            {/* PROFILE TAB */}
             {tab==="profile" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-start justify-between mb-6">
@@ -510,14 +466,12 @@ export default function UserProfile() {
                       </div>
                   }
                 </div>
-
                 {msg.text && (
                   <div className={`mb-5 px-4 py-3 rounded-xl text-sm font-semibold border flex items-center gap-2
                     ${msg.type==="success" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
                     {msg.type==="success" ? "✅" : "❌"} {msg.text}
                   </div>
                 )}
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     { label:"Full Name",   key:"name",       type:"text",  placeholder:"Your full name",  disabled:false, icon:"👤" },
@@ -535,7 +489,7 @@ export default function UserProfile() {
                       {editing && !f.disabled
                         ? <input type={f.type} value={form[f.key]} onChange={e=>setForm({...form,[f.key]:e.target.value})}
                             placeholder={f.placeholder}
-                            className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition"/>
+                            className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm text-gray-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition"/>
                         : <div className={`px-4 py-2.5 rounded-xl text-sm border ${f.disabled?"bg-gray-50 border-gray-100 text-gray-500":"bg-gradient-to-r from-gray-50 to-slate-50 border-gray-100 text-gray-800 font-medium"}`}>
                             {form[f.key] || <span className="text-gray-300 italic text-xs">Not provided</span>}
                           </div>
@@ -546,7 +500,7 @@ export default function UserProfile() {
               </div>
             )}
 
-            {/* ── PURCHASES TAB ── */}
+            {/* PURCHASES TAB */}
             {tab==="purchases" && (
               <div className="space-y-4">
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -557,18 +511,16 @@ export default function UserProfile() {
                       <p className="text-sm text-gray-400">Your active plans & transaction history</p>
                     </div>
                   </div>
-
                   {allPurchases.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Lock className="w-7 h-7 text-gray-300" />
                       </div>
                       <p className="font-bold text-gray-500 mb-1">No purchases yet</p>
-                      <p className="text-sm text-gray-400 mb-5">Buy a plan to unlock mock tests for your chosen categories</p>
+                      <p className="text-sm text-gray-400 mb-5">Buy a plan to unlock mock tests</p>
                       <button onClick={() => navigate("/pricing")}
                         className={`px-6 py-3 bg-gradient-to-r ${pal.bg} text-white rounded-xl font-bold text-sm hover:opacity-90 transition flex items-center gap-2 mx-auto`}>
-                        <ShoppingCart className="w-4 h-4" /> View Plans
-                        <ChevronRight className="w-4 h-4" />
+                        <ShoppingCart className="w-4 h-4" /> View Plans <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
@@ -579,26 +531,20 @@ export default function UserProfile() {
                             <CheckCircle className="w-3.5 h-3.5 text-green-500" /> Active Plans
                           </p>
                           <div className="grid gap-4">
-                            {activePurchases.map((p, i) => (
-                              <PurchaseCard key={i} purchase={p} pal={pal} />
-                            ))}
+                            {activePurchases.map((p, i) => <PurchaseCard key={i} purchase={p} pal={pal} />)}
                           </div>
                         </div>
                       )}
-
                       {expiredPurchases.length > 0 && (
                         <div>
                           <p className="text-xs font-black text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
                             <Clock className="w-3.5 h-3.5 text-gray-400" /> Expired Plans
                           </p>
                           <div className="grid gap-4">
-                            {expiredPurchases.map((p, i) => (
-                              <PurchaseCard key={i} purchase={p} pal={pal} />
-                            ))}
+                            {expiredPurchases.map((p, i) => <PurchaseCard key={i} purchase={p} pal={pal} />)}
                           </div>
                         </div>
                       )}
-
                       <div className="mt-6 pt-4 border-t border-gray-100 text-center">
                         <button onClick={() => navigate("/pricing")}
                           className={`px-5 py-2.5 bg-gradient-to-r ${pal.bg} text-white rounded-xl font-bold text-sm hover:opacity-90 transition flex items-center gap-2 mx-auto`}>
@@ -611,7 +557,7 @@ export default function UserProfile() {
               </div>
             )}
 
-            {/* ── PASSWORD TAB ── */}
+            {/* PASSWORD TAB */}
             {tab==="password" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center gap-3 mb-6">
@@ -636,9 +582,13 @@ export default function UserProfile() {
                     <div key={f.key}>
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">{f.label}</label>
                       <div className="relative">
-                        <input type={showPw[f.key]?"text":"password"} value={pwForm[f.key]}
-                          onChange={e=>setPwForm({...pwForm,[f.key]:e.target.value})} placeholder={f.placeholder}
-                          className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition"/>
+                        <input
+                          type={showPw[f.key]?"text":"password"}
+                          value={pwForm[f.key]}
+                          onChange={e=>setPwForm({...pwForm,[f.key]:e.target.value})}
+                          placeholder={f.placeholder}
+                          className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-xl text-sm text-gray-900 bg-white outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition placeholder-gray-400"
+                        />
                         <EyeBtn k={f.key}/>
                       </div>
                     </div>
@@ -655,7 +605,7 @@ export default function UserProfile() {
               </div>
             )}
 
-            {/* ── FEEDBACK TAB ── */}
+            {/* FEEDBACK TAB */}
             {tab==="feedback" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 p-6 text-white">
@@ -697,14 +647,14 @@ export default function UserProfile() {
                         {isNeg && (
                           <div className="space-y-2">
                             <input value={fb.reason} onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],reason:e.target.value}}))}
-                              placeholder="What went wrong?" className="w-full px-3 py-2 border-2 border-red-200 rounded-xl text-xs outline-none focus:border-red-400 bg-white"/>
+                              placeholder="What went wrong?" className="w-full px-3 py-2 border-2 border-red-200 rounded-xl text-xs text-gray-900 outline-none focus:border-red-400 bg-white"/>
                             <input value={fb.improvement} onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],improvement:e.target.value}}))}
-                              placeholder="How can we improve?" className="w-full px-3 py-2 border-2 border-orange-200 rounded-xl text-xs outline-none bg-white"/>
+                              placeholder="How can we improve?" className="w-full px-3 py-2 border-2 border-orange-200 rounded-xl text-xs text-gray-900 outline-none bg-white"/>
                           </div>
                         )}
                         {fb.rating === "average" && (
                           <input value={fb.improvement} onChange={e=>setFeedback(prev=>({...prev,[mod.key]:{...prev[mod.key],improvement:e.target.value}}))}
-                            placeholder="What could make it better?" className="w-full px-3 py-2 border-2 border-yellow-200 rounded-xl text-xs outline-none bg-white"/>
+                            placeholder="What could make it better?" className="w-full px-3 py-2 border-2 border-yellow-200 rounded-xl text-xs text-gray-900 outline-none bg-white"/>
                         )}
                       </div>
                     );
@@ -751,7 +701,7 @@ export default function UserProfile() {
             </div>
             <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)}
               placeholder='Type "DELETE"'
-              className="w-full px-4 py-3 border-2 border-red-200 rounded-xl text-sm outline-none focus:border-red-400 mb-4 text-center font-bold tracking-widest"/>
+              className="w-full px-4 py-3 border-2 border-red-200 rounded-xl text-sm text-gray-900 outline-none focus:border-red-400 mb-4 text-center font-bold tracking-widest"/>
             <div className="flex gap-3">
               <button onClick={()=>{ setShowDeleteConfirm(false); setDeleteInput(""); }}
                 className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition">Cancel</button>

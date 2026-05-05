@@ -34,13 +34,7 @@ export default function AdminProfile() {
       const u = JSON.parse(stored);
       if (u.role !== "admin") { navigate("/profile"); return; }
       setUser(u);
-      setForm({
-        name:  u.name  || "",
-        email: u.email || "",
-        phone: u.phone || "",
-        city:  u.city  || "",
-        state: u.state || "",
-      });
+      setForm({ name:u.name||"", email:u.email||"", phone:u.phone||"", city:u.city||"", state:u.state||"" });
     } catch { navigate("/login"); }
   }, [navigate]);
 
@@ -98,7 +92,7 @@ export default function AdminProfile() {
       await axios.put(`${BASE}/users/change-password`,
         { current_password: pwForm.current, new_password: pwForm.newPw },
         { headers: { Authorization: `Bearer ${getToken()}` } });
-      setPwMsg({ text:"Password changed!", type:"success" });
+      setPwMsg({ text:"Password changed successfully! ✅", type:"success" });
       setPwForm({ current:"", newPw:"", confirm:"" });
     } catch (err) {
       const e = err.response?.data?.error || "Failed";
@@ -140,7 +134,7 @@ export default function AdminProfile() {
   const EyeBtn = ({ k }) => (
     <button type="button"
       onClick={() => setShowPw(p => ({ ...p, [k]: !p[k] }))}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300">
       {showPw[k]
         ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -161,15 +155,12 @@ export default function AdminProfile() {
   ];
 
   return (
-    // FIX: removed light gradient bg — now fully dark-theme compatible
     <div className="min-h-screen bg-transparent py-8 px-4">
       <div className="max-w-5xl mx-auto">
 
         {/* Hero Banner */}
         <div className={`bg-gradient-to-r ${pal.bg} rounded-3xl p-6 mb-6 text-white shadow-xl`}>
           <div className="flex items-center gap-5">
-
-            {/* Avatar */}
             <div className="relative flex-shrink-0">
               <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white/30 shadow-lg bg-white/20">
                 {user.avatar
@@ -197,25 +188,20 @@ export default function AdminProfile() {
                 className="hidden" onChange={handleAvatarChange}/>
             </div>
 
-            {/* Name + badges */}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-black tracking-tight">{user.name || "Admin"}</h1>
               <p className="text-white/80 text-sm mt-0.5">{user.email}</p>
               <div className="flex flex-wrap gap-2 mt-2.5">
-                <span className="text-xs bg-white/20 backdrop-blur px-3 py-1 rounded-full font-semibold">
-                  👑 Admin
-                </span>
+                <span className="text-xs bg-white/20 backdrop-blur px-3 py-1 rounded-full font-semibold">👑 Admin</span>
               </div>
             </div>
 
-            {/* City + State chips */}
             <div className="hidden md:flex gap-3">
               {[
                 { label:"City",  val: user.city  || "—" },
                 { label:"State", val: user.state || "—" },
               ].map(s => (
-                <div key={s.label}
-                  className="text-center bg-white/15 backdrop-blur rounded-2xl px-4 py-3 min-w-[80px]">
+                <div key={s.label} className="text-center bg-white/15 backdrop-blur rounded-2xl px-4 py-3 min-w-[80px]">
                   <p className="text-sm font-black truncate max-w-[80px]">{s.val}</p>
                   <p className="text-xs text-white/70 mt-0.5">{s.label}</p>
                 </div>
@@ -228,8 +214,6 @@ export default function AdminProfile() {
 
           {/* Sidebar */}
           <div className="space-y-4">
-
-            {/* Nav tabs */}
             <div className="bg-white/10 dark:bg-slate-800 rounded-2xl shadow-sm border border-white/10 overflow-hidden">
               {navItems.map(n => (
                 <button key={n.key} onClick={() => setTab(n.key)}
@@ -244,7 +228,6 @@ export default function AdminProfile() {
               ))}
             </div>
 
-            {/* Account Info + Delete */}
             <div className="bg-white/10 dark:bg-slate-800 rounded-2xl shadow-sm border border-white/10 p-4">
               <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Account Info</p>
               <div className="space-y-2 mb-4">
@@ -253,8 +236,7 @@ export default function AdminProfile() {
                   { label:"Role",         val: "Admin"                                  },
                   { label:"Status",       val: user.status || "Active"                  },
                 ].map(i => (
-                  <div key={i.label}
-                    className="flex items-center justify-between py-1.5 border-b border-white/10 last:border-0">
+                  <div key={i.label} className="flex items-center justify-between py-1.5 border-b border-white/10 last:border-0">
                     <span className="text-xs text-gray-400">{i.label}</span>
                     <span className="text-xs font-bold text-gray-200 capitalize">{i.val}</span>
                   </div>
@@ -279,14 +261,12 @@ export default function AdminProfile() {
                     <p className="text-sm text-gray-400 mt-0.5">Update your details below</p>
                   </div>
                   {!editing
-                    ? <button
-                        onClick={() => { setEditing(true); setMsg({ text:"", type:"" }); }}
+                    ? <button onClick={() => { setEditing(true); setMsg({ text:"", type:"" }); }}
                         className={`flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${pal.bg} text-white text-sm font-semibold rounded-xl hover:opacity-90 transition shadow-sm`}>
                         ✏️ Edit
                       </button>
                     : <div className="flex gap-2">
-                        <button
-                          onClick={() => { setEditing(false); setMsg({ text:"", type:"" }); }}
+                        <button onClick={() => { setEditing(false); setMsg({ text:"", type:"" }); }}
                           className="px-4 py-2 text-sm font-semibold border border-white/20 rounded-xl text-gray-300 hover:bg-white/10 transition">
                           Cancel
                         </button>
@@ -318,17 +298,13 @@ export default function AdminProfile() {
                     <div key={f.key}>
                       <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wide">
                         <span>{f.icon}</span> {f.label}
-                        {f.disabled && (
-                          <span className="normal-case font-normal text-gray-500 ml-1">(cannot edit)</span>
-                        )}
+                        {f.disabled && <span className="normal-case font-normal text-gray-500 ml-1">(cannot edit)</span>}
                       </label>
                       {editing && !f.disabled
-                        ? <input
-                            type={f.type}
-                            value={form[f.key]}
+                        ? <input type={f.type} value={form[f.key]}
                             onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                             placeholder={f.placeholder}
-                            className="w-full px-4 py-2.5 border-2 border-white/20 bg-white/10 text-white rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition placeholder-gray-500"/>
+                            className="w-full px-4 py-2.5 border-2 border-white/20 bg-slate-700 text-white rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition placeholder-gray-400"/>
                         : <div className={`px-4 py-2.5 rounded-xl text-sm border
                             ${f.disabled
                               ? "bg-white/5 border-white/10 text-gray-500"
@@ -346,9 +322,7 @@ export default function AdminProfile() {
             {tab === "password" && (
               <div className="bg-white/10 dark:bg-slate-800 rounded-2xl shadow-sm border border-white/10 p-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pal.bg} flex items-center justify-center text-white text-lg shadow-sm`}>
-                    🔒
-                  </div>
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pal.bg} flex items-center justify-center text-white text-lg shadow-sm`}>🔒</div>
                   <div>
                     <h2 className="text-lg font-black text-white">Change Password</h2>
                     <p className="text-sm text-gray-400">Keep your account secure</p>
@@ -371,16 +345,15 @@ export default function AdminProfile() {
                     { label:"Confirm Password",  key:"confirm",placeholder:"Repeat new password"    },
                   ].map(f => (
                     <div key={f.key}>
-                      <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wide">
-                        {f.label}
-                      </label>
+                      <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wide">{f.label}</label>
                       <div className="relative">
                         <input
                           type={showPw[f.key] ? "text" : "password"}
                           value={pwForm[f.key]}
                           onChange={e => setPwForm({ ...pwForm, [f.key]: e.target.value })}
                           placeholder={f.placeholder}
-                          className="w-full px-4 py-2.5 pr-10 border-2 border-white/20 bg-white/10 text-white rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition placeholder-gray-500"/>
+                          className="w-full px-4 py-2.5 pr-10 border-2 border-white/20 bg-slate-700 text-white rounded-xl text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 transition placeholder-gray-400"
+                        />
                         <EyeBtn k={f.key}/>
                       </div>
                     </div>
@@ -391,10 +364,7 @@ export default function AdminProfile() {
                   </button>
                   <div className="text-center pt-1">
                     <p className="text-xs text-gray-500 mb-1">Don't remember current password?</p>
-                    <Link to="/forgot-password"
-                      className="text-sm font-bold text-violet-400 hover:underline">
-                      Reset via Email →
-                    </Link>
+                    <Link to="/forgot-password" className="text-sm font-bold text-violet-400 hover:underline">Reset via Email →</Link>
                   </div>
                 </div>
               </div>
@@ -406,15 +376,13 @@ export default function AdminProfile() {
                 { icon:"📱", label:"Phone", val: user.phone || "Not set", color:"from-blue-500/10 to-cyan-500/10",    border:"border-blue-500/20",   text:"text-blue-400"   },
                 { icon:"🏙️", label:"City",  val: user.city  || "Not set", color:"from-violet-500/10 to-purple-500/10",border:"border-violet-500/20", text:"text-violet-400" },
               ].map(c => (
-                <div key={c.label}
-                  className={`bg-gradient-to-br ${c.color} rounded-2xl p-4 border ${c.border} text-center`}>
+                <div key={c.label} className={`bg-gradient-to-br ${c.color} rounded-2xl p-4 border ${c.border} text-center`}>
                   <div className="text-2xl mb-1">{c.icon}</div>
                   <p className={`text-sm font-bold truncate ${c.text}`}>{c.val}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{c.label}</p>
                 </div>
               ))}
             </div>
-
           </div>
         </div>
       </div>
@@ -424,33 +392,22 @@ export default function AdminProfile() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-sm">
             <div className="text-center mb-5">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
-                🗑️
-              </div>
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">🗑️</div>
               <h3 className="text-xl font-black text-white">Delete Account</h3>
-              <p className="text-sm text-gray-400 mt-1">
-                This action is permanent and cannot be undone. All your data will be lost.
-              </p>
+              <p className="text-sm text-gray-400 mt-1">This action is permanent and cannot be undone.</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
-              <p className="text-xs text-red-400 font-semibold text-center">
-                Type <span className="font-black">DELETE</span> to confirm
-              </p>
+              <p className="text-xs text-red-400 font-semibold text-center">Type <span className="font-black">DELETE</span> to confirm</p>
             </div>
-            <input
-              value={deleteInput}
-              onChange={e => setDeleteInput(e.target.value)}
+            <input value={deleteInput} onChange={e => setDeleteInput(e.target.value)}
               placeholder='Type "DELETE"'
-              className="w-full px-4 py-3 border-2 border-red-500/30 bg-white/5 text-white rounded-xl text-sm outline-none focus:border-red-400 mb-4 text-center font-bold tracking-widest placeholder-gray-600"/>
+              className="w-full px-4 py-3 border-2 border-red-500/30 bg-slate-700 text-white rounded-xl text-sm outline-none focus:border-red-400 mb-4 text-center font-bold tracking-widest placeholder-gray-500"/>
             <div className="flex gap-3">
-              <button
-                onClick={() => { setShowDeleteConfirm(false); setDeleteInput(""); }}
+              <button onClick={() => { setShowDeleteConfirm(false); setDeleteInput(""); }}
                 className="flex-1 py-3 border-2 border-white/20 rounded-xl text-sm font-bold text-gray-300 hover:bg-white/10 transition">
                 Cancel
               </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleteLoading || deleteInput !== "DELETE"}
+              <button onClick={handleDeleteAccount} disabled={deleteLoading || deleteInput !== "DELETE"}
                 className="flex-1 py-3 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 transition">
                 {deleteLoading ? "Deleting..." : "Delete Forever"}
               </button>

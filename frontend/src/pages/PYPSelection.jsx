@@ -24,12 +24,31 @@ const PYPSelection = () => {
     f.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Clean display name — remove .pdf extension for display
   const displayName = (filename) => filename.replace(/\.pdf$/i, "");
 
-  // Google Docs viewer URL for inline PDF viewing
-  const viewerUrl = (url) =>
-    `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=false`;
+  // Blob download — fixes cross-origin download block
+  const handleDownload = async (url, name) => {
+    try {
+      const res  = await fetch(url);
+      const blob = await res.blob();
+      const a    = document.createElement("a");
+      a.href     = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch {
+      // fallback: open directly
+      window.open(url, "_blank");
+    }
+  };
+
+  // Google Docs viewer for inline viewing (no CORS issue)
+  const handleView = (url) => {
+    const viewer = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=false`;
+    window.open(viewer, "_blank");
+  };
 
   return (
     <div className="p-6 min-h-screen" style={{ background: "var(--bg-primary, #0f172a)" }}>
@@ -143,34 +162,29 @@ const PYPSelection = () => {
                   {/* Action buttons */}
                   <div className="flex gap-3 w-full md:w-auto">
 
-                    {/* VIEW — direct URL, browser renders PDF natively */}
-                    <a
-                      href={file.path}
-                      target="_blank"
-                      rel="noreferrer"
+                    {/* VIEW — Google Docs viewer, no CORS issue */}
+                    <button
+                      onClick={() => handleView(file.path)}
                       className="flex-1 md:flex-none flex items-center justify-center gap-2
-                                 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+                                 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer"
                       style={{ background: "#1e293b", color: "#94a3b8", border: "1px solid #334155" }}
                       onMouseEnter={e => { e.currentTarget.style.background = "#334155"; }}
                       onMouseLeave={e => { e.currentTarget.style.background = "#1e293b"; }}
                     >
                       <Eye className="w-4 h-4" /> View
-                    </a>
+                    </button>
 
-                    {/* DOWNLOAD — direct Cloudinary URL, forces download */}
-                    <a
-                      href={file.path}
-                      download={file.name}
-                      target="_blank"
-                      rel="noreferrer"
+                    {/* DOWNLOAD — blob fetch, fixes compressed/renamed file issue */}
+                    <button
+                      onClick={() => handleDownload(file.download_url || file.path, file.name)}
                       className="flex-1 md:flex-none flex items-center justify-center gap-2
-                                 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+                                 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer"
                       style={{ background: "#4f46e5", color: "white", boxShadow: "0 4px 15px rgba(79,70,229,0.4)" }}
                       onMouseEnter={e => { e.currentTarget.style.background = "#4338ca"; }}
                       onMouseLeave={e => { e.currentTarget.style.background = "#4f46e5"; }}
                     >
                       <Download className="w-4 h-4" /> Download
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
