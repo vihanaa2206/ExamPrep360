@@ -22,6 +22,22 @@ def fetch_all_users():
     return jsonify(users), 200
 
 # ==============================
+# GET CURRENT USER (/users/me)
+# ==============================
+@user_bp.route("/users/me", methods=["GET"])
+@token_required
+def get_me(current_user):
+    # ✅ Auto-logout: blocked/suspended user hits any API → 403
+    is_blocked = current_user.get("is_blocked", False)
+    status     = current_user.get("status", "active")
+    if is_blocked or status in ["blocked", "suspended"]:
+        return jsonify({
+            "error": "Your account has been suspended. Contact support.",
+            "code":  "ACCOUNT_SUSPENDED"
+        }), 403
+    return jsonify({"user": current_user}), 200
+
+# ==============================
 # GET SINGLE USER
 # ==============================
 @user_bp.route("/users/<user_id>", methods=["GET"])
@@ -107,20 +123,20 @@ def heartbeat():
 @user_bp.route("/users/profile", methods=["PUT"])
 @token_required
 def update_profile(current_user):
-    data = request.get_json()
+    # ✅ Block check
+    if current_user.get("is_blocked") or current_user.get("status") in ["blocked", "suspended"]:
+        return jsonify({"error": "Account suspended", "code": "ACCOUNT_SUSPENDED"}), 403
 
-    # ✅ Added designation and institute_name to allowed fields
+    data = request.get_json()
     allowed = ["name", "phone", "city", "state", "target_exam", "designation", "institute_name"]
     update_data = {k: v for k, v in data.items() if k in allowed}
 
-    # ✅ Validate designation value if provided
     if "designation" in update_data and update_data["designation"]:
         valid_designations = ["student", "professor", "other"]
         if update_data["designation"].lower() not in valid_designations:
             return jsonify({"error": f"Invalid designation. Must be one of: {', '.join(valid_designations)}"}), 400
         update_data["designation"] = update_data["designation"].lower()
 
-    # ✅ Strip whitespace from institute_name if provided
     if "institute_name" in update_data and update_data["institute_name"]:
         update_data["institute_name"] = update_data["institute_name"].strip()
 
@@ -155,6 +171,10 @@ def upload_avatar(current_user):
 @user_bp.route("/users/change-password", methods=["PUT"])
 @token_required
 def change_password(current_user):
+    # ✅ Block check
+    if current_user.get("is_blocked") or current_user.get("status") in ["blocked", "suspended"]:
+        return jsonify({"error": "Account suspended", "code": "ACCOUNT_SUSPENDED"}), 403
+
     data = request.get_json()
     current_pw = data.get("current_password")
     new_pw     = data.get("new_password")
@@ -162,6 +182,7 @@ def change_password(current_user):
         return jsonify({"error": "Both passwords required"}), 400
     if len(new_pw) < 6:
         return jsonify({"error": "Password must be at least 6 characters"}), 400
+
     from services.user_service import change_user_password
     success, message = change_user_password(str(current_user["_id"]), current_pw, new_pw)
     if not success:
@@ -189,10 +210,8 @@ def save_feedback():
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-
         from extensions import mongo
         from datetime import datetime
-
         feedback_doc = {
             "user_id":      data.get("user_id", ""),
             "user_email":   data.get("user_email", ""),

@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import jwt
+import bcrypt
 
 from services.auth_service import (
     complete_registration,
@@ -44,7 +45,6 @@ def verify_email_otp():
 
 
 # ================= REGISTER COMPLETE =================
-# ================= REGISTER COMPLETE =================
 @auth_bp.route("/auth/register/complete", methods=["POST"])
 def register_complete():
     data = request.get_json()
@@ -57,17 +57,13 @@ def register_complete():
     student_type = data.get("studentType", "").strip()
     institute = data.get("institute", "").strip()
 
-    # ✅ NEW: All fields mandatory check
     if not name:
         return jsonify({"error": "Name is required"}), 400
-
     if not email:
         return jsonify({"error": "Email is required"}), 400
-
     if not password:
         return jsonify({"error": "Password is required"}), 400
 
-    # ✅ NEW: Strong password validation
     import re
     if len(password) < 8:
         return jsonify({"error": "Password must be at least 8 characters"}), 400
@@ -80,19 +76,13 @@ def register_complete():
     if not re.search(r'[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]', password):
         return jsonify({"error": "Password must contain at least one special character"}), 400
 
-    # ✅ NEW: Designation mandatory
     if not designation:
         return jsonify({"error": "Select designation first"}), 400
-
-    # ✅ NEW: Institute mandatory for student/professor
     if designation in ["student", "professor"] and not institute:
         return jsonify({"error": "Please enter your School / College name"}), 400
-
-    # ✅ NEW: Profession mandatory for other
     if designation == "other" and not profession:
         return jsonify({"error": "Please enter your profession"}), 400
 
-    # ✅ Original logic - bilkul unchanged
     user, error = complete_registration(
         name=name,
         email=email,
@@ -112,11 +102,11 @@ def register_complete():
         "user": user.to_dict()
     }), 201
 
+
 # ================= LOGIN =================
 @auth_bp.route("/auth/login", methods=["POST"])
 def login():
     data = request.get_json()
-
     email = data.get("email")
     password = data.get("password")
 
@@ -127,6 +117,10 @@ def login():
 
     if not user:
         return jsonify({"error": token_or_error}), 401
+
+    # Block login for blocked/suspended users
+    if getattr(user, "is_blocked", False) or getattr(user, "status", "active") in ["blocked", "suspended"]:
+        return jsonify({"error": "Your account has been suspended. Contact support."}), 403
 
     return jsonify({
         "message": "Login successful",
@@ -150,14 +144,12 @@ def forgot_password_route():
 @auth_bp.route("/auth/verify-otp", methods=["POST"])
 def verify_otp_route():
     data = request.get_json()
-
     email = data.get("email")
     otp = data.get("otp")
 
     if not email or not otp:
         return jsonify({"error": "Email and OTP required"}), 400
 
-    # ✅ Verify using forgot purpose
     success, message = verify_otp(email, otp, purpose="forgot")
 
     if not success:
@@ -170,7 +162,6 @@ def verify_otp_route():
 @auth_bp.route("/auth/reset-password", methods=["POST"])
 def update_password_route():
     data = request.get_json()
-
     email = data.get("email")
     new_password = data.get("password")
 
@@ -200,12 +191,10 @@ def resend_forgot_otp():
 @auth_bp.route("/auth/check-role", methods=["GET"])
 def check_role():
     auth_header = request.headers.get("Authorization")
-
     if not auth_header:
         return jsonify({"error": "Token missing"}), 401
 
     token = auth_header.split(" ")[1]
-
     try:
         decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         return jsonify({

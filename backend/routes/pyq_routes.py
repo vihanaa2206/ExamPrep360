@@ -48,18 +48,21 @@ def get_pyq_files(exam_name):
             if raw_name in [".folder_init", "folder_init", ".folder-init"]:
                 continue
 
-            # Clean name — remove Cloudinary auto-appended suffix like "_abc123"
-            # Keep original filename as-is, just add .pdf
             display_name = raw_name + ".pdf"
 
-            # Force browser to render PDF inline (not download)
-            secure_url = r["secure_url"].replace(
-                "/raw/upload/", "/raw/upload/fl_attachment:false/"
+            # View URL — inline viewing via Google Docs viewer (no CORS issue)
+            raw_url = r["secure_url"]
+
+            # Download URL — use fl_attachment to force download from Cloudinary
+            download_url = raw_url.replace(
+                "/raw/upload/",
+                "/raw/upload/fl_attachment/"
             )
 
             files.append({
                 "name": display_name,
-                "path": secure_url,
+                "path": raw_url,           # used for View (open in browser/Google Docs)
+                "download_url": download_url,  # used for Download button
                 "size_kb": round(r.get("bytes", 0) / 1024),
                 "public_id": r["public_id"],
             })
@@ -83,7 +86,6 @@ def upload_pyq():
     uploaded = []
     for f in files:
         if f.filename.lower().endswith(".pdf"):
-            # Use original filename without extension as public_id
             filename = secure_filename(f.filename).replace(".pdf", "").replace(".PDF", "")
             result = cloudinary.uploader.upload(
                 f,
@@ -91,7 +93,7 @@ def upload_pyq():
                 folder=f"pyqs/{exam_name}",
                 public_id=filename,
                 use_filename=True,
-                unique_filename=False,   # <-- prevents Cloudinary from appending random suffix
+                unique_filename=False,
             )
             uploaded.append(f.filename)
 
@@ -138,3 +140,23 @@ def delete_pyq_folder():
     except Exception as e:
         print(f"[PYQ] Delete folder error: {e}")
     return jsonify({"message": f"Folder '{exam_name}' deleted"}), 200
+
+
+@pyq_bp.route("/pyq/rename", methods=["PUT"])
+def rename_pyq_file():
+    init_cloudinary()
+    data = request.get_json()
+    exam_name = data.get("exam_name", "").strip()
+    old_name  = data.get("old_name", "").strip().replace(".pdf", "")
+    new_name  = data.get("new_name", "").strip().replace(".pdf", "")
+    if not exam_name or not old_name or not new_name:
+        return jsonify({"error": "exam_name, old_name, new_name required"}), 400
+    try:
+        cloudinary.uploader.rename(
+            f"pyqs/{exam_name}/{old_name}",
+            f"pyqs/{exam_name}/{new_name}",
+            resource_type="raw"
+        )
+        return jsonify({"message": "File renamed"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
