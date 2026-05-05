@@ -295,6 +295,9 @@ export default function UserProfile() {
     ? user.designation.charAt(0).toUpperCase() + user.designation.slice(1)
     : null;
 
+  // ── OAuth user check ──
+  const isOAuthUser = user.has_password === false;
+
   const allPurchases = (user.purchases || [])
     .filter(p => p.status === "paid")
     .sort((a, b) => new Date(b.purchased_at) - new Date(a.purchased_at));
@@ -302,7 +305,6 @@ export default function UserProfile() {
   const activePurchases  = allPurchases.filter(p => daysLeft(p.expires_at) > 0);
   const expiredPurchases = allPurchases.filter(p => daysLeft(p.expires_at) <= 0);
 
-  // ── Eye toggle button ──
   const EyeBtn = ({ k }) => (
     <button type="button" onClick={() => setShowPw(p=>({...p,[k]:!p[k]}))}
       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -358,6 +360,9 @@ export default function UserProfile() {
                 <span className="text-xs bg-white/20 backdrop-blur px-3 py-1 rounded-full font-semibold capitalize">
                   {user.role==="admin" ? "👑 Admin" : user.designation==="professor" ? "👨‍🏫 Professor" : "🎓 Student"}
                 </span>
+                {isOAuthUser && (
+                  <span className="text-xs bg-white/20 backdrop-blur px-3 py-1 rounded-full font-semibold">🔗 Google Account</span>
+                )}
                 {activePurchases.length > 0 && (
                   <span className="text-xs bg-green-400/30 backdrop-blur px-3 py-1 rounded-full font-bold flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" /> {activePurchases[0].plan_name} Active
@@ -567,41 +572,55 @@ export default function UserProfile() {
                     <p className="text-sm text-gray-400">Keep your account secure</p>
                   </div>
                 </div>
-                {pwMsg.text && (
-                  <div className={`mb-5 px-4 py-3 rounded-xl text-sm font-semibold border flex items-center gap-2
-                    ${pwMsg.type==="success" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
-                    {pwMsg.type==="success" ? "✅" : "❌"} {pwMsg.text}
+
+                {/* ── OAuth warning ── */}
+                {isOAuthUser ? (
+                  <div className="px-4 py-4 rounded-xl text-sm font-semibold border bg-amber-50 text-amber-700 border-amber-200 flex flex-col gap-3">
+                    <p>⚠️ You signed up via <strong>Google</strong>. Password change is not available for Google accounts.</p>
+                    <Link to="/forgot-password"
+                      className="inline-flex items-center gap-1 text-sm font-bold text-violet-600 hover:underline">
+                      Set a password via Email Reset →
+                    </Link>
                   </div>
-                )}
-                <div className="space-y-4 max-w-sm">
-                  {[
-                    { label:"Current Password", key:"current", placeholder:"Enter current password" },
-                    { label:"New Password",     key:"newPw",   placeholder:"Min 6 characters"      },
-                    { label:"Confirm Password", key:"confirm", placeholder:"Repeat new password"   },
-                  ].map(f => (
-                    <div key={f.key}>
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">{f.label}</label>
-                      <div className="relative">
-                        <input
-                          type={showPw[f.key]?"text":"password"}
-                          value={pwForm[f.key]}
-                          onChange={e=>setPwForm({...pwForm,[f.key]:e.target.value})}
-                          placeholder={f.placeholder}
-                          className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-xl text-sm text-gray-900 bg-white outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition placeholder-gray-400"
-                        />
-                        <EyeBtn k={f.key}/>
+                ) : (
+                  <>
+                    {pwMsg.text && (
+                      <div className={`mb-5 px-4 py-3 rounded-xl text-sm font-semibold border flex items-center gap-2
+                        ${pwMsg.type==="success" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
+                        {pwMsg.type==="success" ? "✅" : "❌"} {pwMsg.text}
+                      </div>
+                    )}
+                    <div className="space-y-4 max-w-sm">
+                      {[
+                        { label:"Current Password", key:"current", placeholder:"Enter current password" },
+                        { label:"New Password",     key:"newPw",   placeholder:"Min 6 characters"      },
+                        { label:"Confirm Password", key:"confirm", placeholder:"Repeat new password"   },
+                      ].map(f => (
+                        <div key={f.key}>
+                          <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">{f.label}</label>
+                          <div className="relative">
+                            <input
+                              type={showPw[f.key]?"text":"password"}
+                              value={pwForm[f.key]}
+                              onChange={e=>setPwForm({...pwForm,[f.key]:e.target.value})}
+                              placeholder={f.placeholder}
+                              className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-xl text-sm text-gray-900 bg-white outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition placeholder-gray-400"
+                            />
+                            <EyeBtn k={f.key}/>
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={handlePasswordChange} disabled={pwLoading}
+                        className={`w-full py-3 bg-gradient-to-r ${pal.bg} text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-60 transition shadow-sm`}>
+                        {pwLoading ? "Updating..." : "🔐 Update Password"}
+                      </button>
+                      <div className="text-center pt-1">
+                        <p className="text-xs text-gray-400 mb-1">Don't remember current password?</p>
+                        <Link to="/forgot-password" className="text-sm font-bold text-violet-600 hover:underline">Reset via Email →</Link>
                       </div>
                     </div>
-                  ))}
-                  <button onClick={handlePasswordChange} disabled={pwLoading}
-                    className={`w-full py-3 bg-gradient-to-r ${pal.bg} text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-60 transition shadow-sm`}>
-                    {pwLoading ? "Updating..." : "🔐 Update Password"}
-                  </button>
-                  <div className="text-center pt-1">
-                    <p className="text-xs text-gray-400 mb-1">Don't remember current password?</p>
-                    <Link to="/forgot-password" className="text-sm font-bold text-violet-600 hover:underline">Reset via Email →</Link>
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
             )}
 
