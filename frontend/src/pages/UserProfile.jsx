@@ -51,7 +51,9 @@ function daysLeft(expiresAt) {
 
 function fmtDate(iso) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
 }
 
 function PurchaseCard({ purchase, pal }) {
