@@ -425,10 +425,10 @@ export default function UserProfile() {
               <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Account Info</p>
               <div className="space-y-2 mb-4">
                 {[
-                  { label:"Member Since", val:user.registered_at?.slice(0,10)||"—" },
-                  { label:"Role",         val:user.role||"user"                    },
-                  { label:"Designation",  val:designationBadge||"—"               },
-                  { label:"Institute",    val:user.institute_name||"—"             },
+                  { label:"Member Since", val:fmtDate(user.registered_at) },
+                  { label:"Role",         val:user.role||"user" },
+                  { label:"Designation",  val:designationBadge||"—"},
+                  { label:"Institute",    val:user.institute_name||"—"},
                 ].map(i => (
                   <div key={i.label} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                     <span className="text-xs text-gray-400">{i.label}</span>
