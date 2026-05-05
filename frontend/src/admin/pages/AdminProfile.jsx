@@ -238,9 +238,9 @@ export default function AdminProfile() {
               <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Account Info</p>
               <div className="space-y-2 mb-4">
                 {[
-                  { label:"Member Since", val: user.registered_at?.slice(0, 10) || "—" },
-                  { label:"Role",         val: "Admin"                                  },
-                  { label:"Status",       val: user.status || "Active"                  },
+                  { label:"Member Since", val: user.registered_at ? new Date(user.registered_at).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" }) : "—" },
+                  { label:"Role",         val: "Admin"},
+                  { label:"Status",       val: user.status || "Active" },
                 ].map(i => (
                   <div key={i.label} className="flex items-center justify-between py-1.5 border-b border-white/10 last:border-0">
                     <span className="text-xs text-gray-400">{i.label}</span>
