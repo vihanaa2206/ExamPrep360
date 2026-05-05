@@ -213,14 +213,39 @@ def change_user_password(user_id, current_password, new_password):
     if not stored_pw:
         return False, "Password not set for this account"
 
-    if isinstance(stored_pw, str):
-        stored_pw = stored_pw.encode("utf-8")
+    # ── Werkzeug scrypt format ──
+    if isinstance(stored_pw, bytes):
+        stored_pw = stored_pw.decode("utf-8")
 
-    if not stored_pw.startswith(b"$2b$") and not stored_pw.startswith(b"$2a$"):
+    if stored_pw.startswith("scrypt:"):
+        try:
+            from werkzeug.security import check_password_hash, generate_password_hash
+            if not check_password_hash(stored_pw, current_password):
+                return False, "Current password is incorrect"
+            hashed = generate_password_hash(new_password)
+            mongo.db.users.update_one(
+                {"_id": object_id},
+                {
+                    "$set": {"password": hashed},
+                    "$push": {
+                        "password_change_history": {
+                            "changed_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+                        }
+                    }
+                }
+            )
+            return True, "Password changed successfully"
+        except Exception as e:
+            return False, f"Password check failed: {str(e)}"
+
+    # ── bcrypt format ──
+    stored_pw_bytes = stored_pw.encode("utf-8") if isinstance(stored_pw, str) else stored_pw
+
+    if not stored_pw_bytes.startswith(b"$2b$") and not stored_pw_bytes.startswith(b"$2a$"):
         return False, "Password format not supported. Please reset via email."
 
     try:
-        if not bcrypt.checkpw(current_password.encode("utf-8"), stored_pw):
+        if not bcrypt.checkpw(current_password.encode("utf-8"), stored_pw_bytes):
             return False, "Current password is incorrect"
     except Exception as e:
         return False, f"Password check failed: {str(e)}"
