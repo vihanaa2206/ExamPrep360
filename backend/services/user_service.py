@@ -42,6 +42,7 @@ def get_all_users():
             "is_online":     is_online,
             "login_history": user.get("login_history", [])[-10:],
             "password_change_history": user.get("password_change_history", []),
+            "has_password":  bool(user.get("password") or user.get("password_hash")),
         })
     return result
 
@@ -88,6 +89,7 @@ def get_user_by_id(user_id):
         "is_online":     is_online,
         "login_history": user.get("login_history", []),
         "password_change_history": user.get("password_change_history", []),
+        "has_password":  bool(user.get("password") or user.get("password_hash")),
     }
 
 
@@ -187,6 +189,7 @@ def update_user_profile(user_id, update_data):
         "target_exam", "role", "designation", "avatar",
         "institute_name", "student_type", "profession"
     ]}
+    safe["has_password"] = bool(result.get("password") or result.get("password_hash"))
     return True, safe
 
 
@@ -206,16 +209,13 @@ def change_user_password(user_id, current_password, new_password):
     if not user:
         return False, "User not found"
 
-    # ✅ Handle both field names and both str/bytes
     stored_pw = user.get("password") or user.get("password_hash")
     if not stored_pw:
         return False, "Password not set for this account"
 
-    # ✅ Convert to bytes if string
     if isinstance(stored_pw, str):
         stored_pw = stored_pw.encode("utf-8")
 
-    # ✅ Validate it's a valid bcrypt hash before checking
     if not stored_pw.startswith(b"$2b$") and not stored_pw.startswith(b"$2a$"):
         return False, "Password format not supported. Please reset via email."
 
