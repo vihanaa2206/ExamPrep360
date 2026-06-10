@@ -118,14 +118,16 @@ def create_order():
     except Exception as e:
         return jsonify({"error": f"Razorpay error: {str(e)}"}), 500
 
-    mongo.db.payments.insert_one({
+    payment_doc = {
         "user_id": user_id, "user_name": user.get("name", ""),
         "user_email": user.get("email", ""), "plan": plan_key,
         "plan_name": plan["name"], "categories": categories,
         "order_id": order["id"], "amount": plan["amount"],
         "currency": "INR", "status": "pending",
         "created_at": datetime.utcnow().isoformat(),
-    })
+    }
+    mongo.db.payments.insert_one(payment_doc)
+    payment_doc.pop("_id", None)
 
     return jsonify({
         "order_id": order["id"], "amount": plan["amount"],
@@ -148,7 +150,6 @@ def verify_payment():
     if not all([order_id, payment_id, signature, user_id, plan_key]):
         return jsonify({"error": "Missing fields"}), 400
 
-    # Razorpay SDK se verify karo - safest method
     try:
         client.utility.verify_payment_signature({
             "razorpay_order_id":   order_id,
@@ -247,9 +248,8 @@ def payment_stats():
         "pending_count":      len(pending),
         "plan_breakdown":     plan_breakdown,
     }), 200
-# ════════════════════════════════════════════════════════════════════════
-# 8. DELETE /api/payment/delete/<order_id>  — ADMIN: delete a record
-# ════════════════════════════════════════════════════════════════════════
+
+
 @payment_bp.route("/payment/delete/<order_id>", methods=["DELETE"])
 def delete_payment(order_id):
     result = mongo.db.payments.delete_one({"order_id": order_id})
