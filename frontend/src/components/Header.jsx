@@ -78,7 +78,7 @@ const Header = () => {
     const u = JSON.parse(storedUser);
     if (!u?.email) return;
     const fetchCount = () => {
-      fetch(`https://examprep360-production.up.railway.app/ask/unread-count?email=${encodeURIComponent(u.email)}`)
+      fetch(`https://examprep360.onrender.com/ask/unread-count?email=${encodeURIComponent(u.email)}`)
         .then(r => r.json())
         .then(data => setReplyCount(data.count || 0))
         .catch(() => setReplyCount(0));

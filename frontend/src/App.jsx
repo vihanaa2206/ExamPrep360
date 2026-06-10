@@ -78,7 +78,7 @@ function App() {
       const token = localStorage.getItem("token");
       if (!token) return;
       axios.post(
-        "https://examprep360-production.up.railway.app/api/users/heartbeat",
+        "https://examprep360.onrender.com/api/users/heartbeat",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       ).catch(() => {});

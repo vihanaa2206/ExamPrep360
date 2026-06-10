@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileText, Search, BookOpen } from 'lucide-react';
 import SidebarFilters from '../components/SidebarFilters';
 
-const API = "https://examprep360-production.up.railway.app/api";
+const API = "https://examprep360.onrender.com/api";
 
 const CATEGORY_MAP = {
   "COMEDK UGET":             "Engineering",

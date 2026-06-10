@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 
-const API = "https://examprep360-production.up.railway.app/api";
+const API = "https://examprep360.onrender.com/api";
 
 // ── Exam → Category mapping ───────────────────────────────────────────
 const EXAM_CATEGORY_MAP = {

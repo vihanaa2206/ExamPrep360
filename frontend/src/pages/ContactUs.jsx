@@ -1,7 +1,7 @@
 import { Mail, Phone, MapPin, Send, MessageSquare, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useEffect } from "react";
 
-const API_BASE = "https://examprep360-production.up.railway.app";
+const API_BASE = "https://examprep360.onrender.com";
 
 export default function ContactUs() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });

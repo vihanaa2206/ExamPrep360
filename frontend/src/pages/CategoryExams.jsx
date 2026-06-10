@@ -40,7 +40,7 @@ function CategoryExams() {
     setLoading(true);
     setError(false);
 
-    fetch(`https://examprep360-production.up.railway.app/api/exams?category=${encodeURIComponent(categoryName)}`)
+    fetch(`https://examprep360.onrender.com/api/exams?category=${encodeURIComponent(categoryName)}`)
       .then(r => {
         if (!r.ok) throw new Error("fetch failed");
         return r.json();

@@ -9,7 +9,7 @@ import {
   Briefcase, BookOpen, Lock,
 } from "lucide-react";
 
-const BASE = "https://examprep360-production.up.railway.app/api";
+const BASE = "https://examprep360.onrender.com/api";
 
 const FEEDBACK_MODULES = [
   { key:"mock_tests",       label:"Mock Tests",           icon:"📝" },

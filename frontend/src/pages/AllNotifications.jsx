@@ -74,7 +74,7 @@ const AllNotifications = () => {
   // ──────────────────────────────────────────────────────────
 
   useEffect(() => {
-    fetch("https://examprep360-production.up.railway.app/api/notifications")
+    fetch("https://examprep360.onrender.com/api/notifications")
       .then((r) => r.json())
       .then((data) => { setNotifications(data); setFiltered(data); setLoading(false); })
       .catch(() => setLoading(false));

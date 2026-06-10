@@ -280,7 +280,7 @@ function FeedbackContent({ fb, index, onDelete, isModal = false }) {
     setDeleting(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`https://examprep360-production.up.railway.app/api/feedbacks/${fb._id}`, {
+      const res = await fetch(`https://examprep360.onrender.com/api/feedbacks/${fb._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -454,9 +454,9 @@ export default function AdminFeedbacks() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     log(`Token present: ${!!token}`);
-    log(`Fetching: https://examprep360-production.up.railway.app/api/feedbacks`);
+    log(`Fetching: https://examprep360.onrender.com/api/feedbacks`);
 
-    fetch("https://examprep360-production.up.railway.app/api/feedbacks", {
+    fetch("https://examprep360.onrender.com/api/feedbacks", {
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -25,9 +25,9 @@ export default function AdminDashboard() {
     const token = localStorage.getItem("token");
     const authHeader = { Authorization: `Bearer ${token}` };
     Promise.allSettled([
-      fetch("https://examprep360-production.up.railway.app/api/exams").then(r => r.json()),
-      fetch("https://examprep360-production.up.railway.app/api/users", { headers: authHeader }).then(r => r.json()),
-      fetch("https://examprep360-production.up.railway.app/api/feedbacks", { headers: authHeader }).then(r => r.json()),
+      fetch("https://examprep360.onrender.com/api/exams").then(r => r.json()),
+      fetch("https://examprep360.onrender.com/api/users", { headers: authHeader }).then(r => r.json()),
+      fetch("https://examprep360.onrender.com/api/feedbacks", { headers: authHeader }).then(r => r.json()),
     ]).then(([examsRes, usersRes, feedbacksRes]) => {
       const examsData     = examsRes.status     === "fulfilled" && Array.isArray(examsRes.value)     ? examsRes.value     : [];
       const usersData     = usersRes.status     === "fulfilled" && Array.isArray(usersRes.value)     ? usersRes.value     : [];

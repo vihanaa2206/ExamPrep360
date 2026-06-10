@@ -71,7 +71,7 @@ const AllColleges = () => {
 
   useEffect(() => {
     if (!isLoggedIn) return; // don't fetch if not logged in
-    fetch("https://examprep360-production.up.railway.app/api/colleges")
+    fetch("https://examprep360.onrender.com/api/colleges")
       .then((r) => r.json())
       .then((data) => { setColleges(data); setFiltered(data); setLoading(false); })
       .catch(() => setLoading(false));

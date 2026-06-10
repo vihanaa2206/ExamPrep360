@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileText, Download, Eye, ArrowLeft, Search, AlertCircle } from 'lucide-react';
 
-const API = "https://examprep360-production.up.railway.app/api";
+const API = "https://examprep360.onrender.com/api";
 
 const PYPSelection = () => {
   const { examName } = useParams();

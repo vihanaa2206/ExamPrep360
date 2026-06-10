@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Upload, Trash2, RefreshCw, FileText, CheckCircle, AlertCircle, BookOpen } from "lucide-react";
 
-const BASE = "https://examprep360-production.up.railway.app";
+const BASE = "https://examprep360.onrender.com";
 
 export default function AdminAITraining() {
   const [pdfs, setPdfs]           = useState([]);

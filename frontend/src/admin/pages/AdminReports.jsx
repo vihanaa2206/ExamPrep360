@@ -8,7 +8,7 @@ import {
   RefreshCw, Eye, RotateCcw, Target, X,
 } from "lucide-react";
 
-const BASE = "https://examprep360-production.up.railway.app/api";
+const BASE = "https://examprep360.onrender.com/api";
 const COLORS = ["#6366f1","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4"];
 
 const CAT_COLORS = {

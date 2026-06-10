@@ -6,7 +6,7 @@ import {
   Search, AlertCircle, TrendingUp,
 } from "lucide-react";
 
-const API_BASE = "https://examprep360-production.up.railway.app/api";
+const API_BASE = "https://examprep360.onrender.com/api";
 
 export default function AdminQueries() {
   // ── existing ask queries (unchanged) ─────────────────────
@@ -385,3 +385,4 @@ export default function AdminQueries() {
     </div>
   );
 }
+

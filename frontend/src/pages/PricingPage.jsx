@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 
-const API = "https://examprep360-production.up.railway.app/api";
+const API = "https://examprep360.onrender.com/api";
 
 const ALL_CATEGORIES = [
   { key: "Law",            label: "Law",            icon: Scale,       color: "from-amber-400 to-orange-500",  bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-700",  exams: "CLAT, AILET, DU LLB, AP LAWCET" },

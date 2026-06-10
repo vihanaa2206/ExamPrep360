@@ -6,7 +6,7 @@ import {
   BarChart3, Lock,
 } from "lucide-react";
 
-const API = "https://examprep360-production.up.railway.app/api";
+const API = "https://examprep360.onrender.com/api";
 
 const EXAM_META = {
   "JEE Main":     { cat:"Engineering", gradient:"from-blue-500 to-indigo-600",    light:"bg-blue-50",   text:"text-blue-600",   icon:<GraduationCap className="w-6 h-6"/> },

@@ -26,7 +26,7 @@ const NewsSection = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("https://examprep360-production.up.railway.app/api/notifications")
+    fetch("https://examprep360.onrender.com/api/notifications")
       .then((r) => r.json())
       .then((data) => {
         // Show mix: 2 is_new exam + 1 is_new college on homepage
@@ -134,3 +134,4 @@ const NewsSection = () => {
 };
 
 export default NewsSection;
+

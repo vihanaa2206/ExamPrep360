@@ -72,7 +72,7 @@ const CollegeDetails = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`https://examprep360-production.up.railway.app/api/colleges/${slug}`)
+    fetch(`https://examprep360.onrender.com/api/colleges/${slug}`)
       .then((r) => r.json())
       .then((d) => {
         console.log("SLUG FROM BACKEND:", d.slug);

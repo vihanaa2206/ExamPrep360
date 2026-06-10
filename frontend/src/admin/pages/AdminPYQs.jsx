@@ -6,7 +6,7 @@ import {
   CheckCircle, AlertCircle,
 } from "lucide-react";
 
-const API = "https://examprep360-production.up.railway.app/api";
+const API = "https://examprep360.onrender.com/api";
 
 const CATEGORY_MAP = {
   "COMEDK UGET":"Engineering","Jee Advanced":"Engineering","Jee Main":"Engineering",

@@ -5,7 +5,7 @@ import {
   FileQuestion, PlusCircle, Filter,
 } from "lucide-react";
 
-const API = "https://examprep360-production.up.railway.app/api";
+const API = "https://examprep360.onrender.com/api";
 
 const EXAM_CATEGORIES = {
   Engineering:        ["JEE Main","JEE Advanced","BITSAT","VITEEE","SRMJEEE","WBJEE"],

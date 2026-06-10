@@ -35,3 +35,4 @@ const VideoModal = ({ isOpen, onClose }) => {
 };
 
 export default VideoModal;
+
