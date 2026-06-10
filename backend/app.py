@@ -1,4 +1,5 @@
 import os
+import re
 from dotenv import load_dotenv
 load_dotenv()
 import logging
@@ -24,7 +25,7 @@ from extensions import mongo
 app = Flask(__name__)
 
 CORS(app,
-     origins=["https://*.vercel.app", "http://localhost:5173", "http://localhost:3000"],
+     origins=re.compile(r"https://.*\.vercel\.app"),
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
