@@ -221,7 +221,8 @@ export default function MockTestExam() {
 
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      if (user._id) {
+      const userId = user.id || (user._id?.$oid) || (typeof user._id === "string" ? user._id : null);
+      if (userId) {
         const EXAM_CATEGORY_MAP = {
           "JEE Main": "Engineering", "JEE Advanced": "Engineering",
           "BITSAT": "Engineering", "VITEEE": "Engineering",
@@ -243,7 +244,7 @@ export default function MockTestExam() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_id:         user._id,
+            user_id:         userId,
             exam_name:       decodedExam,
             test_no:         parseInt(testNo),
             category:        EXAM_CATEGORY_MAP[decodedExam] || "Other",
