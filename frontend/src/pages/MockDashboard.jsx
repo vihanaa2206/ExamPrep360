@@ -7,6 +7,8 @@ import {
   ChevronRight, Trash2, ArrowLeft, Zap, X, Users,
 } from "lucide-react";
 
+const API = "https://examprep360.onrender.com/api";
+
 /* ─── Radial Answer Card ─────────────────────────────────── */
 function AnswerCard({ test, onClose }) {
   if (!test) return null;
@@ -30,7 +32,6 @@ function AnswerCard({ test, onClose }) {
         style={{ animation: "zoomIn .25s ease" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div>
             <h3 className="font-black text-lg">{test.exam}</h3>
@@ -39,7 +40,6 @@ function AnswerCard({ test, onClose }) {
           <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-xl transition"><X className="w-5 h-5"/></button>
         </div>
 
-        {/* Radial summary */}
         <div className="flex items-center gap-6 px-6 py-4 border-b border-gray-100 flex-shrink-0">
           <svg width="100" height="100" viewBox="0 0 120 120" className="flex-shrink-0">
             <circle cx="60" cy="60" r={r} fill="none" stroke="#f3f4f6" strokeWidth="10"/>
@@ -69,7 +69,6 @@ function AnswerCard({ test, onClose }) {
           </div>
         </div>
 
-        {/* Q&A list */}
         <div className="overflow-y-auto flex-1 px-6 py-4 bg-gray-50">
           {answers.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-8">No question-level data saved for this test.</p>
@@ -117,9 +116,8 @@ function AnswerCard({ test, onClose }) {
   );
 }
 
-/* ─── Leaderboard Popup — shows ALL users per exam ───────── */
+/* ─── Leaderboard Popup ──────────────────────────────────── */
 function LeaderboardPopup({ exam, allHistory, currentUserId, onClose }) {
-  // Keep BEST attempt per user for this exam
   const userMap = {};
   allHistory
     .filter(h => h.exam === exam)
@@ -135,7 +133,6 @@ function LeaderboardPopup({ exam, allHistory, currentUserId, onClose }) {
     });
 
   const board = Object.values(userMap).sort((a, b) => b.score - a.score || b.accuracy - a.accuracy);
-
   const medalEmoji = (i) => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
   const rankBg = (i) =>
     i === 0 ? "bg-yellow-50 border-yellow-300"
@@ -154,7 +151,6 @@ function LeaderboardPopup({ exam, allHistory, currentUserId, onClose }) {
         style={{ animation: "zoomIn .25s ease" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div>
             <h3 className="font-black text-lg flex items-center gap-2"><Trophy className="w-5 h-5"/> Leaderboard</h3>
@@ -162,7 +158,6 @@ function LeaderboardPopup({ exam, allHistory, currentUserId, onClose }) {
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-xl transition"><X className="w-5 h-5"/></button>
         </div>
-
         <div className="overflow-y-auto flex-1 px-4 py-3 space-y-2">
           {board.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-8">No attempts recorded for this exam yet.</p>
@@ -170,15 +165,12 @@ function LeaderboardPopup({ exam, allHistory, currentUserId, onClose }) {
             const isMe = u.uid === currentUserId;
             return (
               <div key={u.uid} className={`rounded-2xl border-2 p-4 flex items-center gap-4 transition ${rankBg(i)} ${isMe ? "ring-2 ring-blue-400" : ""}`}>
-                {/* Rank */}
                 <div className="w-10 text-center flex-shrink-0">
                   {medalEmoji(i)
                     ? <span className="text-2xl">{medalEmoji(i)}</span>
                     : <span className="text-lg font-black text-gray-400">#{i+1}</span>
                   }
                 </div>
-
-                {/* Name */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-black text-gray-900 truncate">{u.name}</p>
@@ -186,8 +178,6 @@ function LeaderboardPopup({ exam, allHistory, currentUserId, onClose }) {
                   </div>
                   <p className="text-xs text-gray-400">{u.score}/{u.maxScore} pts</p>
                 </div>
-
-                {/* Score ring */}
                 <div className="flex-shrink-0 text-right">
                   <p className={`text-2xl font-black ${u.accuracy >= 70 ? "text-green-600" : u.accuracy >= 50 ? "text-yellow-600" : "text-red-500"}`}>
                     {u.accuracy}%
@@ -218,19 +208,53 @@ export default function MockDashboard() {
     const uid = currentUser._id || currentUser.id || currentUser.email;
     setCurrentUserId(uid);
 
-    const raw = localStorage.getItem("mock_history");
-    if (!raw) { setHistory([]); setAllHistory([]); return; }
-    try {
-      const all = JSON.parse(raw);
-      if (!Array.isArray(all)) { setHistory([]); setAllHistory([]); return; }
-      setAllHistory(all);
-      const myHistory = all.filter(h => {
-        const entryId = h.userId || h.user_id;
-        if (!entryId) return false;
-        return entryId === uid;
-      });
-      setHistory(myHistory);
-    } catch { setHistory([]); setAllHistory([]); }
+    if (uid && currentUser._id) {
+      fetch(`${API}/reports/user/${currentUser._id}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!Array.isArray(data)) return;
+          const converted = data.map(r => ({
+            exam:            r.exam_name,
+            testNo:          r.test_no,
+            score:           r.score,
+            maxScore:        r.total_marks || r.total_questions,
+            total_marks:     r.total_marks,
+            total_questions: r.total_questions,
+            correct:         r.answers?.filter(a => a.is_correct).length || 0,
+            wrong:           r.answers?.filter(a => !a.is_correct && a.selected_option).length || 0,
+            skipped:         r.answers?.filter(a => !a.selected_option).length || 0,
+            accuracy:        r.total_marks
+                               ? Math.round((r.score / r.total_marks) * 100)
+                               : Math.round((r.score / (r.total_questions || 1)) * 100),
+            total:           r.total_questions,
+            date:            r.attempted_at,
+            scheme:          r.marking_scheme || "+1 / 0",
+            userId:          r.user_id,
+            answers:         r.answers || [],
+          }));
+          setHistory(converted);
+          setAllHistory(converted);
+        })
+        .catch(() => {
+          const raw = localStorage.getItem("mock_history");
+          if (!raw) return;
+          try {
+            const all = JSON.parse(raw);
+            if (!Array.isArray(all)) return;
+            setAllHistory(all);
+            setHistory(all.filter(h => (h.userId || h.user_id) === uid));
+          } catch {}
+        });
+    } else {
+      const raw = localStorage.getItem("mock_history");
+      if (!raw) return;
+      try {
+        const all = JSON.parse(raw);
+        if (!Array.isArray(all)) return;
+        setAllHistory(all);
+        setHistory(all.filter(h => (h.userId || h.user_id) === uid));
+      } catch {}
+    }
   }, []);
 
   const clearHistory = () => {
@@ -335,7 +359,6 @@ export default function MockDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Popups */}
       {selectedTest && <AnswerCard test={selectedTest} onClose={() => setSelectedTest(null)}/>}
       {leaderboardExam && (
         <LeaderboardPopup
@@ -345,10 +368,8 @@ export default function MockDashboard() {
           onClose={() => setLeaderboardExam(null)}
         />
       )}
-
       <style>{`@keyframes zoomIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}`}</style>
 
-      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-10 px-4">
         <div className="max-w-5xl mx-auto">
           <button onClick={() => navigate("/free-tests")} className="flex items-center gap-2 text-blue-200 hover:text-white mb-4 text-sm transition">
@@ -367,8 +388,6 @@ export default function MockDashboard() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {label:"Tests Attempted",value:totalTests,       icon:<BookOpen className="w-5 h-5"/>,   color:"text-blue-600",   bg:"bg-blue-50"},
@@ -384,7 +403,6 @@ export default function MockDashboard() {
           ))}
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 w-fit shadow-sm flex-wrap">
           {[{key:"overview",label:"Overview"},{key:"exams",label:"By Exam"},{key:"history",label:"Test History"},{key:"leaderboard",label:"🏆 Leaderboard"}].map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key)}
@@ -394,7 +412,6 @@ export default function MockDashboard() {
           ))}
         </div>
 
-        {/* OVERVIEW */}
         {activeTab === "overview" && (
           <div className="grid md:grid-cols-2 gap-5">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex items-center gap-6">
@@ -442,12 +459,10 @@ export default function MockDashboard() {
           </div>
         )}
 
-        {/* BY EXAM */}
         {activeTab === "exams" && (
           <div className="space-y-3">
             {examList.map(e => {
               const g = grade(e.avgAcc);
-              // Count all users for this exam from allHistory
               const usersForExam = new Set(allHistory.filter(h=>h.exam===e.exam).map(h=>h.userId||h.user_id||h.userEmail)).size;
               return (
                 <div key={e.exam} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition cursor-pointer"
@@ -463,10 +478,8 @@ export default function MockDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        onClick={ev => { ev.stopPropagation(); setLeaderboardExam(e.exam); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-xl text-xs font-bold hover:bg-yellow-100 transition border border-yellow-200"
-                      >
+                      <button onClick={ev => { ev.stopPropagation(); setLeaderboardExam(e.exam); }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-xl text-xs font-bold hover:bg-yellow-100 transition border border-yellow-200">
                         <Trophy className="w-3 h-3"/> Leaderboard
                       </button>
                       <div className="text-right">
@@ -489,7 +502,6 @@ export default function MockDashboard() {
           </div>
         )}
 
-        {/* HISTORY */}
         {activeTab === "history" && (
           <div className="space-y-3">
             <p className="text-sm text-gray-500 font-medium">Click any card to see full answer breakdown</p>
@@ -502,7 +514,6 @@ export default function MockDashboard() {
               const r=35, circ=2*Math.PI*r;
               const offset=circ-(h.accuracy/100)*circ;
               const ringColor=h.accuracy>=70?"#22c55e":h.accuracy>=50?"#f59e0b":"#ef4444";
-
               return (
                 <div key={i}
                   className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-lg transition cursor-pointer hover:scale-[1.01]"
@@ -518,7 +529,6 @@ export default function MockDashboard() {
                       <text x="40" y="37" textAnchor="middle" fontSize="13" fontWeight="900" fill={ringColor}>{h.accuracy}%</text>
                       <text x="40" y="50" textAnchor="middle" fontSize="8" fill="#9ca3af">accuracy</text>
                     </svg>
-
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h3 className="font-black text-gray-900">{h.exam}</h3>
@@ -533,27 +543,20 @@ export default function MockDashboard() {
                         <span className="text-gray-400 font-bold">— {skipped} skip</span>
                       </div>
                     </div>
-
                     <div className="text-right flex-shrink-0">
                       <p className={`text-xl font-black ${g.color}`}>{h.score}/{h.maxScore} pts</p>
                       <div className="flex items-center gap-2 mt-2 justify-end">
-                        <button
-                          onClick={ev => { ev.stopPropagation(); setLeaderboardExam(h.exam); }}
-                          className="p-1.5 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition border border-yellow-200"
-                          title="Leaderboard"
-                        >
+                        <button onClick={ev => { ev.stopPropagation(); setLeaderboardExam(h.exam); }}
+                          className="p-1.5 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition border border-yellow-200" title="Leaderboard">
                           <Trophy className="w-3.5 h-3.5"/>
                         </button>
-                        <button
-                          onClick={ev => { ev.stopPropagation(); navigate(`/mock-test/${encodeURIComponent(h.exam)}/${h.testNo}`); }}
-                          className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition"
-                        >
+                        <button onClick={ev => { ev.stopPropagation(); navigate(`/mock-test/${encodeURIComponent(h.exam)}/${h.testNo}`); }}
+                          className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition">
                           Retry
                         </button>
                       </div>
                     </div>
                   </div>
-
                   {(correct+wrong+skipped) > 0 && (
                     <div className="mt-3 h-2 rounded-full overflow-hidden flex">
                       <div className="bg-green-400 h-full" style={{width:`${(correct/(correct+wrong+skipped))*100}%`}}/>
@@ -568,13 +571,11 @@ export default function MockDashboard() {
           </div>
         )}
 
-        {/* LEADERBOARD TAB */}
         {activeTab === "leaderboard" && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-500 font-medium">Click any exam card to view its full leaderboard — comparing all users who attempted</p>
+            <p className="text-sm text-gray-500 font-medium">Click any exam card to view its full leaderboard</p>
             {examList.map(e => {
               const g = grade(e.avgAcc);
-              // Build leaderboard preview for this exam from ALL users
               const userMap = {};
               allHistory.filter(h=>h.exam===e.exam).forEach(h => {
                 const uid=h.userId||h.user_id||h.userEmail||"Unknown";
@@ -583,7 +584,6 @@ export default function MockDashboard() {
               });
               const board = Object.values(userMap).sort((a,b)=>b.score-a.score||b.accuracy-a.accuracy);
               const medal = (i) => i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`;
-
               return (
                 <div key={e.exam}
                   className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-lg cursor-pointer hover:scale-[1.01] transition"
@@ -603,7 +603,6 @@ export default function MockDashboard() {
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-300"/>
                   </div>
-                  {/* Top 3 preview */}
                   <div className="flex gap-2 flex-wrap">
                     {board.slice(0,3).map((u,i) => (
                       <div key={u.uid} className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs border ${
@@ -624,7 +623,6 @@ export default function MockDashboard() {
             })}
           </div>
         )}
-
       </div>
     </div>
   );
